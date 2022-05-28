@@ -39,3 +39,5 @@ class Card:
                 return key
 
     
+    def show_card(self):
+        return self.name
