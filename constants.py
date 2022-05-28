@@ -6,9 +6,7 @@ POWERS = {
     "none": 0
     }
 
-CARD_COUNTS = {
-    "Red King": 2,
-    "Black King": 2,
+CARD_COUNTS_4 = {
     "Queen": 4,
     "Jack": 4,
     "10": 4,
@@ -21,8 +19,14 @@ CARD_COUNTS = {
     "3": 4,
     "2": 4,
     "Ace": 4,
+}
+
+CARD_COUNTS_2 = {
+    "Red King": 2,
+    "Black King": 2,
     "Joker": 2
 }
+
 
 CARD_VALUES = {
     "Red King": -1,
@@ -42,6 +46,23 @@ CARD_VALUES = {
     "Joker": 0 
 }
 
+CARD_ABBRV = {
+    "Red King": "rk",
+    "Black King": "bk",
+    "Queen": "q",
+    "Jack": "j",
+    "10": "10",
+    "9": "9",
+    "8": "8",
+    "7": "7",
+    "6": "6",
+    "5": "5",
+    "4": "4",
+    "3": "3",
+    "2": "2",
+    "Ace": "1",
+    "Joker": "jo" 
+}
 
 CARD_POWERS = {
     "Red King": 5,
