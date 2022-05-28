@@ -12,16 +12,8 @@ class Stack:
     
     def __delitem__(self, indice):
         del self.cards[indice]
-
+# stolen from card
     def __getitem__(self, key):
-        """
-        Allows for accessing, and slicing of cards, using ``Deck[indice]``,
-        ``Deck[start:stop]``, etc.
-        :arg int indice:
-            The indice to get.
-        :returns:
-            The ``Card`` at the given indice.
-        """
         self_len = len(self)
         if isinstance(key, slice):
             return [self[i] for i in xrange(*key.indices(self_len))]
@@ -42,8 +34,8 @@ class Stack:
         """
         return len(self.cards)
     
-    def show_hand(self):
-        return self.cards
+    #def show_hand(self):
+        #return self.cards
 
     def shuffle(self):
         rng = random.Random()

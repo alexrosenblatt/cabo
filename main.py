@@ -20,17 +20,25 @@ def transfer(self_name,to_name, self_index,other_index):
         del self_name[other_index]
         to_name.insert(self_index,transfer_card)
 
-
-deck = build_deck()
-deal_pile = Stack(deck)
+# setup initial stacks with main deck as deal pile, human_deck, computer_deck.
+deal_pile = build_deck()
+deal_pile = Stack(deal_pile)
 deal_pile.shuffle()
-test_deck = []
-Stack(test_deck)
+human_deck = []
+computer_deck = []
+Stack(human_deck)
+Stack(computer_deck)
 
-transfer(deal_pile,test_deck,2,0)
-transfer(deal_pile,test_deck,2,1)
-transfer(deal_pile,test_deck,2,2)
-transfer(deal_pile,test_deck,2,3)
+transfer(deal_pile,human_deck,0,0)
+transfer(deal_pile,human_deck,0,0)
+transfer(deal_pile,human_deck,0,0)
+transfer(deal_pile,human_deck,0,0)
 
-for cards in test_deck:
-    print(cards.show_card())
+def show_hand(deck_name):
+    hand = []
+    for cards in deck_name:
+        hand.append(cards.show_card())
+    print(f"Your hand contains: {hand}")
+    hand = []
+
+show_hand(human_deck)
