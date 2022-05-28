@@ -10,7 +10,7 @@ class Card:
     def get_data(self):
         print(f'{self.value},{self.abbrv},{self.power}')
 
-    def power_string(self):
+    def get_power_string(self):
         for key,value in c.POWERS.items():
             if self.power == value:
                 return key
@@ -20,5 +20,5 @@ class Card:
 ace = Card(12,12,4)
 
 ace.get_data()
-print(ace.power_string())
+print(ace.get_power_string())
 
