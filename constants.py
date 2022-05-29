@@ -46,24 +46,6 @@ CARD_VALUES = {
     "Joker": 0 
 }
 
-CARD_ABBRV = {
-    "Red King": "rk",
-    "Black King": "bk",
-    "Queen": "q",
-    "Jack": "j",
-    "10": "10",
-    "9": "9",
-    "8": "8",
-    "7": "7",
-    "6": "6",
-    "5": "5",
-    "4": "4",
-    "3": "3",
-    "2": "2",
-    "Ace": "1",
-    "Joker": "jo" 
-}
-
 CARD_POWERS = {
     "Red King": 5,
     "Black King": 4,
