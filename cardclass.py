@@ -2,7 +2,7 @@ import constants as c
 
 class Card:
     '''This creates a cabo card.'''
-    def __init__(self,name,val=0,abbrv=0,power=0) -> None:
+    def __init__(self,name,val=0,abbrv=0,power=0) -> str:
         self.name = name
         self.value = val
         self.abbrv = abbrv
