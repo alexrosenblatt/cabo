@@ -1,6 +1,8 @@
 from __future__ import annotations
 from ast import Break, Str
+from collections import deque
 import random
+from tkinter import Variable
 from typing import List
 from traitlets import Bool
 import constants as c
@@ -16,18 +18,23 @@ def build_deck() -> list[Card]:
         Card.update_powers(card) 
     return new_deck
 
-def build_hand(deal_pile:list[Card],human_deck:list[Card]) -> bool:
+def build_hand(source_stack:list[Card],dest_stack:list[Card]) -> bool:
         n: int
         n = 1 
         while n < 5:
-            transfer(deal_pile,human_deck,0,n)
+            transfer(source_stack,dest_stack,n,0)
             n += 1
         return True
 
-def transfer(self_name: list[Card],to_name: list[Card],self_index:int,other_index:int) -> bool:
-        transfer_card = self_name[self_index]
-        del(self_name[self_index])
-        to_name.insert(other_index,transfer_card)    
+def transfer(source_stack: list[Card],dest_stack: list[Card], source_index:int = 0, dest_index:int = 0) -> bool:
+        '''Copies a card in one stack to destination stack with:
+          - source stack as source_stack
+          - destination stack as dest_stack
+          - source_index  = source index to copy and delete card from. Default is "top" of deck or index 0
+          - dest_index  = destination index to insert'''
+        transfer_card = source_stack[source_index]
+        del(source_stack[source_index])
+        dest_stack.insert(dest_index,transfer_card)    
         return True
 
 def shuffle(stack_name:list[Card]) -> bool:
@@ -35,20 +42,32 @@ def shuffle(stack_name:list[Card]) -> bool:
     rng.shuffle(stack_name)
     return True
 
-def show_hand(stack_name:list[Card]) -> str:
+def show_hand(stack_name:list[Card],open_hand:bool = False) -> str:
         hand:List[str] = []
         cards:Card
         response:str = ''
         for cards in stack_name:
             hand.append(cards.name)
-        response = f"Your hand contains: {hand}"
+        if open_hand == True:
+            response = f"The {stack_name.name} contains: {hand}"
+        else:
+            response = f"The {stack_name.name} contains: {hand[:2]}"
         return response
 
+def get_top_card(stack_name:list[Card]) -> str:
+        return stack_name[0].name
 
-class Stack():
+# how can i rewrite this to have the default stack?
+def show_top_discard(stack_name):
+        top_card = get_top_card(stack_name)
+        return f"The top card in the discard pile is: {top_card}."
+
+# need to refactor this to not use list :grimace:
+class Stack(deque):
     '''Creates a hand and maintains functions related to a stack. '''
-    def __init__(self,members: list[Card] = []):
+    def __init__(self, name: str = '',members: list[Card] = []):
         self.members = members
+        self.name = name
 
     def remove(self,index: int ):
         self.members.pop(index)
@@ -58,15 +77,14 @@ class Stack():
         self.members.insert(index,card)
         return True
 
-    def deal(self):
-        return self.members.pop()
-    
-    def is_empty(self):
-        return self.members == []
+    def retrieve_score(self) -> int:
+        sum: int = 0
+        for c in self:
+            sum += c.value
+        return sum
 
 #add logic to show human hand vs. computer hand
-    
-        
+           
 
 class Card():
     '''This creates a cabo card.'''
@@ -108,40 +126,37 @@ class Card():
     
     def show_card(self):
         return self.name
-            
+ 
+ 
+class Game():
+    def __init__(self,human_stack, computer_stack, discard_stack,turn_count:int = 0,open_hand:bool = True,cabo_called:bool = False):
+        self.turn_count = turn_count
+        # set this to see every card in each hand each round
+        self.open_hand = open_hand
+        self.human_stack = human_stack
+        self.computer_stack = computer_stack
+        self.discard_stack = discard_stack
+        self.cabo_called = cabo_called
 
-
-
-
-
-
-
-            
-''' 
- #commenting out to test inheriting behaviors from the "list"  
-    def __delitem__(self, indice):
-        del self.members[indice]
-
-# stolen from pycarddealer
-
-    def __getitem__(self, key):
-        self_len = len(self)
-        if isinstance(key, slice):
-            return [self[i] for i in xrange(*key.indices(self_len))]
-        elif isinstance(key, int):
-            if key < 0 :
-                key += self_len
-            if key >= self_len:
-                raise IndexError("The index ({}) is out of range.".format(key))
-            return self.members[key]
+    def start_turn(self) -> bool:
+        if self.turn_count == 0:
+            print(show_hand(self.human_stack,False))
+            return True
+        if self.open_hand == True:
+            print(show_hand(self.computer_stack,True))
+            print(show_hand(self.human_stack,True))
+            return True
         else:
-            raise TypeError("Invalid argument type.")
+            print(show_top_discard(self.discard_stack))
+            return True
     
-    def __len__(self):
-        """
-        Allows check the Stack length, with len.
-        :returns:
-            The length of the stack (self.members).
-        """
-        return len(self.members)
-'''  
+    def call_cabo(self) -> bool:
+        self.cabo_called = True
+        return True
+
+    def cabo_state(self) -> bool:
+        if self.cabo_called == True:
+            return True    
+        else:
+            return False
+
