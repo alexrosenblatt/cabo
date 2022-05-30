@@ -13,6 +13,8 @@ shuffle(deal_stack)
 human_stack: List[Card] = []
 computer_stack: List[Card] = []
 discard_stack: List[Card] = []
+# figure out why this doesn't work:
+    # deal_stack = s("Deal Pile", deal_stack)
 human_stack = s("Human's hand", human_stack)
 computer_stack = s("Computer's Hand", computer_stack)
 discard_stack = s("discard pile", discard_stack)
@@ -27,19 +29,22 @@ while game.cabo_called == False:
     print(human_stack.retrieve_score())
     transfer(human_stack,discard_stack,1,0)
     transfer(deal_stack,human_stack,0,1)
-    #g.turn_count = end_turn(turn_count)
+    g.end_turn(game)
 
     print(g.cabo_state(game))
 
     g.start_turn(game)
     print(computer_stack.retrieve_score())
-
-    print(g.cabo_state(game))
+    g.end_turn(game)
 
     g.start_turn(game)
     print(computer_stack.retrieve_score())
+    g.end_turn(game)
 
     g.call_cabo(game)
+    print(f"Was cabo called? {g.cabo_state(game)}")
+
+    g.end_turn(game)
 
     
 

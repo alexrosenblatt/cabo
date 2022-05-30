@@ -20,9 +20,9 @@ def build_deck() -> list[Card]:
 
 def build_hand(source_stack:list[Card],dest_stack:list[Card]) -> bool:
         n: int
-        n = 1 
+        n = 0 
         while n < 5:
-            transfer(source_stack,dest_stack,n,0)
+            transfer(source_stack,dest_stack,0,n)
             n += 1
         return True
 
@@ -137,6 +137,7 @@ class Game():
         self.computer_stack = computer_stack
         self.discard_stack = discard_stack
         self.cabo_called = cabo_called
+        self.turn_count = turn_count
 
     def start_turn(self) -> bool:
         if self.turn_count == 0:
@@ -145,10 +146,17 @@ class Game():
         if self.open_hand == True:
             print(show_hand(self.computer_stack,True))
             print(show_hand(self.human_stack,True))
+            print(show_top_discard(self.discard_stack))
             return True
         else:
             print(show_top_discard(self.discard_stack))
             return True
+    def end_turn(self) -> bool:
+        self.turn_count += 1
+        print(f"That concludes turn: {self.turn_count}")
+        return True
+
+        
     
     def call_cabo(self) -> bool:
         self.cabo_called = True
