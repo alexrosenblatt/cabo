@@ -6,6 +6,7 @@ from tkinter import Variable
 from typing import List
 from traitlets import Bool
 import constants as c
+from tabulate import *
 
 
 def build_deck() -> list[Card]:
@@ -21,7 +22,7 @@ def build_deck() -> list[Card]:
 def build_hand(source_stack:list[Card],dest_stack:list[Card]) -> bool:
         n: int
         n = 0 
-        while n < 5:
+        while n < 4:
             transfer(source_stack,dest_stack,0,n)
             n += 1
         return True
@@ -51,7 +52,19 @@ def show_hand(stack_name:list[Card],open_hand:bool = False) -> str:
         if open_hand == True:
             response = f"The {stack_name.name} contains: {hand}"
         else:
-            response = f"The {stack_name.name} contains: {hand[:2]}"
+            response = f"The {stack_name.name} contains: Card 1. {hand[0]} 2. {hand[1]}"
+        return response
+
+def show_hand_table(stack_name:list[Card]) -> str:
+        hand:List[str] = [["Position","Card"]]
+        cards:Card
+        response:str = ''
+        index = 1
+        for cards in stack_name:
+                hand.append([f"Position: {index}",cards.name])
+                index += 1
+        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
+        response = f"\n\n\n{stack_name.name}: \n\n {table}"
         return response
 
 def get_top_card(stack_name:list[Card]) -> str:
@@ -62,7 +75,7 @@ def show_top_discard(stack_name):
         top_card = get_top_card(stack_name)
         return f"The top card in the discard pile is: {top_card}."
 
-# need to refactor this to not use list :grimace:
+# need to refactor this to not use deque?
 class Stack(deque):
     '''Creates a hand and maintains functions related to a stack. '''
     def __init__(self, name: str = '',members: list[Card] = []):
@@ -129,7 +142,7 @@ class Card():
  
  
 class Game():
-    def __init__(self,human_stack, computer_stack, discard_stack,turn_count:int = 0,open_hand:bool = True,cabo_called:bool = False):
+    def __init__(self,human_stack, computer_stack, discard_stack,turn_count:int = 0,open_hand:bool = False,cabo_called:bool = False):
         self.turn_count = turn_count
         # set this to see every card in each hand each round
         self.open_hand = open_hand
@@ -140,24 +153,22 @@ class Game():
         self.turn_count = turn_count
 
     def start_turn(self) -> bool:
-        if self.turn_count == 0:
-            print(show_hand(self.human_stack,False))
-            return True
         if self.open_hand == True:
-            print(show_hand(self.computer_stack,True))
-            print(show_hand(self.human_stack,True))
+            print(show_hand_table(self.computer_stack))
+            print(show_hand_table(self.human_stack))
             print(show_top_discard(self.discard_stack))
+            return True
+        elif self.turn_count == 0:
+            print(show_hand_table(self.human_stack,False))
             return True
         else:
             print(show_top_discard(self.discard_stack))
             return True
     def end_turn(self) -> bool:
         self.turn_count += 1
-        print(f"That concludes turn: {self.turn_count}")
+        print(f"\n \n \n --------------------------------------------------------\n \t \tThat concludes turn {self.turn_count}\n--------------------------------------------------------\n")
         return True
 
-        
-    
     def call_cabo(self) -> bool:
         self.cabo_called = True
         return True
@@ -168,3 +179,6 @@ class Game():
         else:
             return False
 
+class Turn():
+    def __init__(self,) -> None:
+        pass

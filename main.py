@@ -22,7 +22,7 @@ build_hand(deal_stack,human_stack)
 build_hand(deal_stack,computer_stack)
 transfer(deal_stack,discard_stack,0,0)
 
-game = Game(human_stack, computer_stack, discard_stack)
+game = Game(human_stack, computer_stack, discard_stack,0, True)
 
 while game.cabo_called == False:
     g.start_turn(game)
