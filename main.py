@@ -29,5 +29,5 @@ while game.cabo_called == False:
     g.start_round(game)
     g.human_turn(game)
     g.end_round(game)
-
-#print(s.retrieve_score(human_stack))2
+3
+#print(s.retrieve_score(human_stack))
