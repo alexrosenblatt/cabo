@@ -1,12 +1,15 @@
 from __future__ import annotations
 from ast import Break, Str
 from collections import deque
+from operator import truediv
+from pickle import FALSE
+from pickletools import int4
 import random
 from tkinter import Variable
 from typing import List
 from traitlets import Bool
 import constants as c
-from tabulate import *
+from tabulate import tabulate
 
 
 def build_deck() -> list[Card]:
@@ -43,6 +46,7 @@ def shuffle(stack_name:list[Card]) -> bool:
     rng.shuffle(stack_name)
     return True
 
+#remove this - its unusued
 def show_hand(stack_name:list[Card],open_hand:bool = False) -> str:
         hand:List[str] = []
         cards:Card
@@ -55,13 +59,42 @@ def show_hand(stack_name:list[Card],open_hand:bool = False) -> str:
             response = f"The {stack_name.name} contains: Card 1. {hand[0]} 2. {hand[1]}"
         return response
 
-def show_hand_table(stack_name:list[Card]) -> str:
+def show_hand_table(stack_name:list[Card],open_hand: bool = False) -> str:
+        hand:list[list[str]] = [["Position","Card"]]
+        cards:Card
+        response:str = ''
+        index = 1
+        if open_hand == False:
+            for cards in stack_name:
+                    if index < 3:
+                        hand.append([f"Position: {index}",cards.name])
+                        index += 1
+                    else:
+                        hand.append([f"Position: {index}",'x'])
+                        index += 1
+
+        else:
+            for cards in stack_name:
+                    hand.append([f"Position: {index}",cards.name])
+                    index += 1
+        response = tabulate_hand(hand,stack_name)
+        return response
+
+def tabulate_hand(hand:list[list[str]],stack_name:list[Card]) -> str:
+        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
+        response = f"\n\n\n{stack_name.name}: \n\n {table}"
+        return response
+
+
+
+
+def show_placeholder_hand(stack_name:list[Card]) -> str:
         hand:List[str] = [["Position","Card"]]
         cards:Card
         response:str = ''
         index = 1
         for cards in stack_name:
-                hand.append([f"Position: {index}",cards.name])
+                hand.append([f"Position: {index}",'x'])
                 index += 1
         table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
         response = f"\n\n\n{stack_name.name}: \n\n {table}"
@@ -73,7 +106,7 @@ def get_top_card(stack_name:list[Card]) -> str:
 # how can i rewrite this to have the default stack?
 def show_top_discard(stack_name):
         top_card = get_top_card(stack_name)
-        return f"The top card in the discard pile is: {top_card}."
+        return f"\n The top card in the discard pile is: {top_card}."
 
 # need to refactor this to not use deque?
 class Stack(deque):
@@ -95,6 +128,14 @@ class Stack(deque):
         for c in self:
             sum += c.value
         return sum
+    
+    def draw_card_preview(self,index:int = 0) -> str:
+        drawn_card = self[index]
+        return f"\n You've drawn a {drawn_card.name}."
+        
+    def draw_card(self,index:int = 0) -> Card:
+        drawn_card = self.pop(index)
+        return drawn_card
 
 #add logic to show human hand vs. computer hand
            
@@ -142,7 +183,7 @@ class Card():
  
  
 class Game():
-    def __init__(self,human_stack, computer_stack, discard_stack,turn_count:int = 0,open_hand:bool = False,cabo_called:bool = False):
+    def __init__(self,human_stack, computer_stack, discard_stack,deal_stack,turn_count:int = 1,open_hand:bool = False,cabo_called:bool = False):
         self.turn_count = turn_count
         # set this to see every card in each hand each round
         self.open_hand = open_hand
@@ -151,25 +192,21 @@ class Game():
         self.discard_stack = discard_stack
         self.cabo_called = cabo_called
         self.turn_count = turn_count
-
-    def start_turn(self) -> bool:
-        if self.open_hand == True:
-            print(show_hand_table(self.computer_stack))
-            print(show_hand_table(self.human_stack))
-            print(show_top_discard(self.discard_stack))
+        self.deal_stack = deal_stack
+    
+    def initialize_game(self) -> bool:
+        print("Welcome to Cabo!")
+        name:str = input(f"Please tell me your name! \n")
+        played_before:str = input(f"Have you played before? Enter Yes or No \n")
+        played_before = played_before.lower()
+        if played_before == 'yes':
             return True
-        elif self.turn_count == 0:
-            print(show_hand_table(self.human_stack,False))
-            return True
-        else:
-            print(show_top_discard(self.discard_stack))
-            return True
-    def end_turn(self) -> bool:
-        self.turn_count += 1
-        print(f"\n \n \n --------------------------------------------------------\n \t \tThat concludes turn {self.turn_count}\n--------------------------------------------------------\n")
-        return True
+        if played_before == 'no':
+            print(f"/n Placeholder for Instructions \n")
+            return False
 
     def call_cabo(self) -> bool:
+        print("CABOOOOOOO!")
         self.cabo_called = True
         return True
 
@@ -179,6 +216,50 @@ class Game():
         else:
             return False
 
-class Turn():
-    def __init__(self,) -> None:
+    def start_round(self) -> bool:
+        print(f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {self.turn_count}\n---------------------------------------------------------\n")
+        if self.open_hand == True:
+            print(show_hand_table(self.computer_stack,True))
+            print(show_hand_table(self.human_stack,True))
+            print(show_top_discard(self.discard_stack))
+            print(Stack.draw_card_preview(self.deal_stack))
+            return True
+        elif self.turn_count == 0 and self.open_hand == False:
+            print(show_placeholder_hand(self.computer_stack))
+            print(show_hand_table(self.human_stack))
+            print(show_top_discard(self.discard_stack))
+            print(Stack.draw_card_preview(self.deal_stack))
+            return True
+        #I think i can get rid of the above elif statemetn
+        else:
+            print(show_placeholder_hand(self.computer_stack))
+            print(show_placeholder_hand(self.human_stack))
+            print(show_top_discard(self.discard_stack))
+            print(Stack.draw_card_preview(self.deal_stack))
+            return True
+
+    def human_turn(self) -> bool:
+        actions:int = int(input(f"\n What actions would you like to take? \n \t 1. Use power on drawn card \n \t 2. Swap draw card with card in your own hand \n \t 3. Discard drawn card \n \t 4. Call Cabo! \n Please respond with 1,2,3, or 4. \n" ))
+        if actions == 4:
+            self.call_cabo()
+        elif actions == 3:
+            return
+        elif actions == 2:
+            hand_index: int = int(input("Which card would you like to replace?")) - 1
+            transfer(self.human_stack,self.discard_stack,hand_index,0)
+            transfer(self.deal_stack,self.human_stack,0,hand_index)
+            return
+        elif actions == 1:
+            return   
+        return True
+   
+    def computer_turn(self):
+        return
+
+
+    def end_round(self) -> bool:
+        self.turn_count += 1
+        print(f"\n \n \n --------------------------------------------------------\n \t \tThat concludes turn {self.turn_count}\n---------------------------------------------------------\n")
+        return True
+    
         pass

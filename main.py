@@ -13,39 +13,21 @@ shuffle(deal_stack)
 human_stack: List[Card] = []
 computer_stack: List[Card] = []
 discard_stack: List[Card] = []
-# figure out why this doesn't work:
-    # deal_stack = s("Deal Pile", deal_stack)
-human_stack = s("Human's hand", human_stack)
+# figure out why this doesn't work:4
+    # deal_stack = s("Deal Pile", deal_stack)yes
+human_stack = s("Human's hand", human_stack)  
 computer_stack = s("Computer's Hand", computer_stack)
 discard_stack = s("discard pile", discard_stack)
 build_hand(deal_stack,human_stack)
 build_hand(deal_stack,computer_stack)
 transfer(deal_stack,discard_stack,0,0)
 
-game = Game(human_stack, computer_stack, discard_stack,0, True)
+game = Game(human_stack, computer_stack, discard_stack,deal_stack,0, True)
 
 while game.cabo_called == False:
-    g.start_turn(game)
-    print(human_stack.retrieve_score())
-    transfer(human_stack,discard_stack,1,0)
-    transfer(deal_stack,human_stack,0,1)
-    g.end_turn(game)
+    #g.initialize_game(game)
+    g.start_round(game)
+    g.human_turn(game)
+    g.end_round(game)
 
-    print(g.cabo_state(game))
-
-    g.start_turn(game)
-    print(computer_stack.retrieve_score())
-    g.end_turn(game)
-
-    g.start_turn(game)
-    print(computer_stack.retrieve_score())
-    g.end_turn(game)
-
-    g.call_cabo(game)
-    print(f"Was cabo called? {g.cabo_state(game)}")
-
-    g.end_turn(game)
-
-    
-
-
+#print(s.retrieve_score(human_stack))2
