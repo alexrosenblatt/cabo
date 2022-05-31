@@ -7,6 +7,7 @@ from pickletools import int4
 import random
 from tkinter import Variable
 from typing import List
+from unicodedata import name
 from traitlets import Bool
 import constants as c
 from tabulate import tabulate
@@ -89,7 +90,7 @@ def tabulate_hand(hand:list[list[str]],stack_name:list[Card]) -> str:
 
 
 def show_placeholder_hand(stack_name:list[Card]) -> str:
-        hand:List[str] = [["Position","Card"]]
+        hand:List[List[str]] = [["Position","Card"]]
         cards:Card
         response:str = ''
         index = 1
@@ -168,6 +169,14 @@ class Card():
             else:
                 return False
         return False
+#figure this out
+    def return_card_powers(self) -> Str:
+        if self.name == c.CARD_POWERS.keys():
+            power_value = c.CARD_POWERS.values()
+            if power_value == c.POWERS.values():
+                return c.POWERS.keys()
+
+
 
 # need to add error handling and fix the return function here
     def get_power_string(self) -> str:
@@ -175,7 +184,6 @@ class Card():
         for key,value in c.POWERS.items():
             if self.power == value:
                 return key
-        return ''
 
     
     def show_card(self):
@@ -204,6 +212,7 @@ class Game():
         if played_before == 'no':
             print(f"/n Placeholder for Instructions \n")
             return False
+        return True
 
     def call_cabo(self) -> bool:
         print("CABOOOOOOO!")
@@ -223,6 +232,7 @@ class Game():
             print(show_hand_table(self.human_stack,True))
             print(show_top_discard(self.discard_stack))
             print(Stack.draw_card_preview(self.deal_stack))
+            print(Card.return_card_powers(self.deal_stack[0]))
             return True
         elif self.turn_count == 0 and self.open_hand == False:
             print(show_placeholder_hand(self.computer_stack))
@@ -230,7 +240,6 @@ class Game():
             print(show_top_discard(self.discard_stack))
             print(Stack.draw_card_preview(self.deal_stack))
             return True
-        #I think i can get rid of the above elif statemetn
         else:
             print(show_placeholder_hand(self.computer_stack))
             print(show_placeholder_hand(self.human_stack))
@@ -238,19 +247,37 @@ class Game():
             print(Stack.draw_card_preview(self.deal_stack))
             return True
 
+
     def human_turn(self) -> bool:
-        actions:int = int(input(f"\n What actions would you like to take? \n \t 1. Use power on drawn card \n \t 2. Swap draw card with card in your own hand \n \t 3. Discard drawn card \n \t 4. Call Cabo! \n Please respond with 1,2,3, or 4. \n" ))
-        if actions == 4:
-            self.call_cabo()
-        elif actions == 3:
-            return
-        elif actions == 2:
-            hand_index: int = int(input("Which card would you like to replace?")) - 1
-            transfer(self.human_stack,self.discard_stack,hand_index,0)
-            transfer(self.deal_stack,self.human_stack,0,hand_index)
-            return
-        elif actions == 1:
-            return   
+        while True:
+            actions:int = int(input(f"\n What actions would you like to take? \n \t 1. Use power on drawn card \n \t 2. Swap draw card with card in your own hand \n \t 3. Discard drawn card \n \t 4. Call Cabo! \n Please respond with 1,2,3, or 4. \n" ))
+            try:
+                if actions == 4: #call cabo
+                    self.call_cabo()
+                    return True
+                elif actions == 3: # discard
+                    transfer(self.deal_stack,self.discard_stack,0,0)
+                    #figure out how to end turn here
+                    return True
+                elif actions == 2: # swap draw card
+                    while True:
+                        hand_index: int = int(input("Which card would you like to replace?")) - 1
+                        try:
+                            transfer(self.human_stack,self.discard_stack,hand_index,0)
+                            transfer(self.deal_stack,self.human_stack,0,hand_index)
+                        except IndexError:
+                            print(f"\n Sorry - that card doesn't exist. Let's try again. \n")
+                        else:
+                            break
+                    return True
+                elif actions == 1: #use power
+                    return True
+                elif actions > 5:
+                    raise ValueError #to make sure number is in range
+            except ValueError:
+                print(f"\n Sorry - that is not a possible action. Let's try again. \n")
+            else:
+                break
         return True
    
     def computer_turn(self):
