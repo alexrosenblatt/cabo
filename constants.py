@@ -47,7 +47,7 @@ CARD_VALUES = {
 }
 
 CARD_POWERS = {
-    "Red King": 5,
+    "Red King": 0,
     "Black King": 4,
     "Queen": 3,
     "Jack": 4,
