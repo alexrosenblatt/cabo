@@ -35,6 +35,3 @@ while card_count_2() == 54 and game.cabo_called == False:
     Game.human_turn(game)
     Game.end_round(game)
     
-
-
-#print(s.retrieve_score(human_stack))

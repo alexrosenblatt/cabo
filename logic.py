@@ -2,7 +2,6 @@ from __future__ import annotations
 from collections import deque
 import random
 from typing import Any, List, Optional
-from traitlets import Int
 import constants as c
 from tabulate import tabulate
 from time import sleep
