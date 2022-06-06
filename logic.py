@@ -1,6 +1,5 @@
 from __future__ import annotations
 from collections import deque
-from operator import truediv
 import random
 from typing import Any, List, Optional
 from traitlets import Int
@@ -16,7 +15,7 @@ def build_deck() -> list[Card]:
     for card in new_deck:
         Card.update_value(card)
     for card in new_deck:
-        Card.update_powers(card) 
+        Card.update_powers(card)
     return new_deck
 
 def build_hand(source_stack:Stack,dest_stack:Stack) -> bool:
@@ -37,12 +36,14 @@ def transfer(source_stack: Stack,dest_stack: Stack, source_index:int = 0, dest_i
     '''Copies a card in one stack to destination stack with:
           - source stack as source_stack
           - destination stack as dest_stack
-          - source_index  = source index to copy and delete card from. Default is "top" of deck or index 0
+          - source_index  = source index to copy and delete card from. 
+            Default is "top" of deck or index 0
           - dest_index  = destination index to insert'''
     transfer_results = transfer_action(source_stack,dest_stack,source_index,dest_index)
     if describe == True:
-        print(f"{transfer_results[0]} was transferred to {transfer_results[1]}. ")
+        print(f"{transfer_results[0]} was transferred to {transfer_results[1]}.")
     return True
+
 
 def swap(source_stack: Stack,dest_stack: Stack, source_index:int, dest_index:int) -> tuple[str,str]:
         swap_card1:Card = source_stack[source_index]
@@ -50,11 +51,8 @@ def swap(source_stack: Stack,dest_stack: Stack, source_index:int, dest_index:int
         del(source_stack[source_index])
         del(dest_stack[dest_index])
         dest_stack.insert(dest_index,swap_card1)    
-        source_stack.insert(source_index,swap_card2)    
+        source_stack.insert(source_index,swap_card2)   
         return swap_card1.name,swap_card2.name
-
-    
-
 def shuffle(stack_name: Stack) -> bool:
     rng = random.Random()
     rng.shuffle(stack_name)
@@ -187,15 +185,8 @@ class Stack(deque): #TODO need to refactor this to not use deque?
         drawn_card = self[index]
         return f"\n You've drawn a {drawn_card.name}."
         
-    
 
-    
-
-
-#add logic to show human hand vs. computer hand
-           
-
-class Card():
+class Card():  #add logic to show human hand vs. computer hand
     '''This creates a cabo card.'''
     def __init__(self,name: str,val: int = 0,power: int =0):
         self.name = name
@@ -314,7 +305,7 @@ class Game():
             print(Stack.print_draw_card_preview(self.deal_stack))
             return True
 
-    
+
 
     def human_turn(self) -> bool: #TODO refactor this to work correctly
         while True:
