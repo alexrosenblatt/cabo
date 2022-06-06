@@ -53,6 +53,7 @@ def swap(source_stack: Stack,dest_stack: Stack, source_index:int, dest_index:int
         dest_stack.insert(dest_index,swap_card1)    
         source_stack.insert(source_index,swap_card2)   
         return swap_card1.name,swap_card2.name
+
 def shuffle(stack_name: Stack) -> bool:
     rng = random.Random()
     rng.shuffle(stack_name)
@@ -98,16 +99,11 @@ def show_placeholder_hand(stack_name: Stack) -> str:
         response = f"\n\n\n{stack_name.name}: \n\n {table}"
         return response
 
-def get_top_card(stack_name: Stack) -> str:
-        return stack_name[0].name
 
 def get_drawn_card(stack_name: Stack) -> Card:
         return stack_name[0]
 
-# how can i rewrite this to have the default stack? #TODO seperate the presentation logic
-def show_top_discard(stack_name: Stack) -> str:
-        top_card = get_top_card(stack_name)
-        return f"\n The top card in the discard pile is: {top_card}."
+
 
 
 
@@ -136,6 +132,7 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
         card_name:str = r[0]
         index_n:int = r[1] 
         print(f"{card_name} is in position {index_n} in your hand.")
+        sleep(4)
         return True
     elif drawn_card_power == 2:
         peek_index = int(input("Which of your opponents cards would you like to look at? Respond with position number: \n"))
@@ -143,12 +140,14 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
         card_name = r[0]
         index_n = r[1] 
         print(f"{card_name} is in position {index_n} in your opponents hand.")
+        sleep(4)
         return True
     elif drawn_card_power == 3:
         source_index = int(input("Which of your cards would you like to swap? Please enter position number."))
         dest_index = int(input("Which of your opponents cards would you like to swap with? Please enter position number."))
         r = power_controller(drawn_card_power,human_stack,computer_stack,dest_index,source_index)
         print(f"Your card at position {source_index} was swapped with your opponents card at position {dest_index}.")
+        sleep(4)
         return True
     elif drawn_card_power == 4:
         source_index = int(input("Which of your cards would you like to swap? Please enter position number."))
@@ -157,10 +156,13 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
         c1 = r[0]
         c2 = r[1]
         print(f"{c1} at position {source_index} was swapped with {c2} at position {dest_index} ")
+        sleep(4)
         return True
     else:
         return False
  
+
+
 class Stack(deque): #TODO need to refactor this to not use deque?
     '''Creates a hand and maintains functions related to a stack. '''
     def __init__(self, name: str,members: List[Card]):
@@ -184,6 +186,9 @@ class Stack(deque): #TODO need to refactor this to not use deque?
     def print_draw_card_preview(self,index:int = 0) -> str:
         drawn_card = self[index]
         return f"\n You've drawn a {drawn_card.name}."
+    
+    def get_top_card(self) -> str:
+        return self[0].name
         
 
 class Card():  #add logic to show human hand vs. computer hand
@@ -203,7 +208,8 @@ class Card():  #add logic to show human hand vs. computer hand
     
 
     def update_value(self) -> bool: 
-        '''This function is used when building deck to update card values from constant.'''
+        '''This function is used when building deck 
+        to update card values from constant.'''
         for key,value in c.CARD_VALUES.items():
             if self.name == key:
                 self.value = value
@@ -278,78 +284,110 @@ class Game():
         transfer(self.deal_stack,self.discard_stack,0,0,True) #TODO update method description to describe discard scenario
         return True           #figure out how to end turn here
     
-    def swap_draw_card(self,hand_index) -> bool:
+    def swap_draw_card(self,hand_index) -> tuple[Stack,Stack]:
             transfer(self.human_stack,self.discard_stack,hand_index,0)
             transfer(self.deal_stack,self.human_stack,0,hand_index)
-            return True
+            return self.human_stack[0],self.discard_stack[0] 
 
     def start_round(self) -> bool:
         print(f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {self.turn_count}\n---------------------------------------------------------\n")
+        sleep(1)
         if self.open_hand == True:
             print(show_hand_table(self.computer_stack,True))
             print(show_hand_table(self.human_stack,True))
-            print(show_top_discard(self.discard_stack))
-            print(Stack.print_draw_card_preview(self.deal_stack))
-            print(Card.print_card_powers_string(self.deal_stack[0]))
+            #print(show_top_discard(self.discard_stack))
+            #print(Stack.print_draw_card_preview(self.deal_stack))
+            sleep(2)
             return True
         elif self.turn_count == 0 and self.open_hand == False:
             print(show_placeholder_hand(self.computer_stack))
             print(show_hand_table(self.human_stack))
-            print(show_top_discard(self.discard_stack))
-            print(Stack.print_draw_card_preview(self.deal_stack))
+            #print(show_top_discard(self.discard_stack))
+            #print(Stack.print_draw_card_preview(self.deal_stack))
+            sleep(2)
             return True
         else:
             print(show_placeholder_hand(self.computer_stack))
             print(show_placeholder_hand(self.human_stack))
-            print(show_top_discard(self.discard_stack))
-            print(Stack.print_draw_card_preview(self.deal_stack))
+            #print(show_top_discard(self.discard_stack))
+            #print(Stack.print_draw_card_preview(self.deal_stack))
             return True
 
-
-
     def human_turn(self) -> bool: #TODO refactor this to work correctly
-        while True:
-            actions:int = int(input(f"\n What actions would you like to take? \n \t 1. Use power on drawn card \n \t 2. Swap draw card with card in your own hand \n \t 3. Discard drawn card \n \t 4. Call Cabo! \n \t 5. End game \n Please respond with 1,2,3,4, or 5. \n" ))
-            try:
-                if actions == 5: #end game
-                    exit()
-                elif actions == 4: #call cabo
-                    self.call_cabo()
-                    return True
-                elif actions == 3: # discard
-                    self.discard_card()
-                    return True
-                elif actions == 2: # swap draw card
-                    while True:
-                        hand_index: int = int(input("Which card would you like to replace?")) - 1
-                        try:
-                            self.swap_draw_card(hand_index)
-                        except IndexError:
-                            print(f"\n Sorry - that card doesn't exist. Let's try again. \n")
-                        else:
-                            break
-                    return True
-                elif actions == 1: #TODO could probably refactor this to make this presentation only. 
-                    top_card = get_drawn_card(self.deal_stack)
-                    drawn_card_power = top_card.power
-                    if drawn_card_power == 0:
-                        raise ValueError
-                    else:
-                        use_power(drawn_card_power,self.human_stack,self.computer_stack) #TODO make this agnostic to number/type of players
-                        return True
-                elif actions > 6:
-                    raise ValueError #to make sure number is in range
-            except ValueError:
-                if actions == 2:
-                    print(f"\n Sorry - that is not a valid card position. Let's try again. \n")
-                if actions == 1:
-                    print(f"\n Sorry - your card does not have a power. Let's try again. \n")
+        self.start_round()
+        discard_card = get_drawn_card(self.discard_stack)
+        r = int(input(f"\n The discard pile contains a {discard_card.name}. \
+            \n \n Would you like to swap this with a card in your own hand? \
+            \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "))
+        if r == 1:
+            while True:
+                hand_index: int = int(input("Which card would you like to replace?")) - 1
+                try:
+                    r = swap(self.discard_stack,self.human_stack,0,hand_index)
+                    print(f"You swapped discarded card {r[1]} for a {r[0]} at position {hand_index} in your hand.")
+                    sleep(2)
+                except IndexError:
+                    print(f"\n Sorry - that card doesn't exist. Let's try again. \n")
+                    sleep(1)
                 else:
-                    print(f"\n Sorry - that is not a valid operation. Let's try again. \n")
-            else:
-                break
-        return True
-   
+                    break
+                return True
+        elif r == 0:
+            while True:
+                sleep(1)
+                print(Stack.print_draw_card_preview(self.deal_stack))
+                print(Card.print_card_powers_string(self.deal_stack[0]))
+                actions:int = int(input("\n What actions would you like to take?  \
+                                        \n \t 1. Use power on drawn card  \
+                                        \n \t 2. Discard drawn card \
+                                        \n \t 3. Swap drawn card with one in hand \
+                                        \n \t 4. Call Cabo! \
+                                        \n \t 5. End game  \
+                                        \n \n \t Please respond with 1,2,3,4 \n \n"))
+                try:
+                    if actions == 5: #end game
+                        exit()
+                    elif actions == 4: #call cabo
+                        self.call_cabo()
+                        return True
+                    elif actions == 3:
+                        while True:
+                            hand_index: int = int(input("Which card would you like to replace?")) - 1
+                            try:
+                                r = self.swap_draw_card(hand_index)
+                                print(f"You swapped discarded card {r[1].name} for a {r[0].name} at position {hand_index} in your hand.")
+                                sleep(2)
+                            except IndexError:
+                                print(f"\n Sorry - that card doesn't exist. Let's try again. \n")
+                                sleep(1)
+                            else:
+                                break
+                        return True
+                    elif actions == 2: # discard
+                        self.discard_card()
+                        sleep(3)
+                        return True
+                    elif actions == 1: #TODO could probably refactor this to make this presentation only. 
+                        top_card = get_drawn_card(self.deal_stack)
+                        drawn_card_power = top_card.power
+                        if drawn_card_power == 0:
+                            raise ValueError
+                        else:
+                            use_power(drawn_card_power,self.human_stack,self.computer_stack) #TODO make this agnostic to number/type of players
+                            return True
+                    elif actions > 6:
+                        raise ValueError #to make sure number is in range
+                except ValueError:
+                    if actions == 2:
+                        print(f"\n Sorry - that is not a valid card position. Let's try again. \n")
+                    if actions == 1:
+                        print(f"\n Sorry - your card does not have a power. Let's try again. \n")
+                    else:
+                        print(f"\n Sorry - that is not a valid operation. Let's try again. \n")
+                else:
+                    break
+            return True
+
     def computer_turn(self):
         return
 
@@ -364,4 +402,7 @@ class Game():
         self.turn_count += 1
         return True
     
-    
+    # how can i rewrite this to have the default stack? #TODO seperate the presentation logic
+def show_top_discard(stack_name: Stack) -> str:
+        top_card = stack_name.get_top_card()
+        return f"\n The top card in the discard pile is: {top_card}."

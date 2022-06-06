@@ -29,25 +29,12 @@ def card_count_2():
     count = len(deal_stack)+len(human_stack)+len(discard_stack)+len(computer_stack)
     return count
 
-game = Game(human_stack, computer_stack, discard_stack,deal_stack,0, True)
-    #g.initialize_game(game)
-while card_count_2() == 54:
-    g.start_round(game)
+game = Game(human_stack, computer_stack, discard_stack,deal_stack,1, True,False)
+# g.initialize_game(game)
+while card_count_2() == 54 and game.cabo_called == False:
     g.human_turn(game)
     g.end_round(game)
-    g.start_round(game)
-    g.human_turn(game)
-    g.end_round(game)
-    g.start_round(game)
-    g.human_turn(game)
-    g.end_round(game)
-    g.start_round(game)
-    g.human_turn(game)
-    g.end_round(game)
-    g.start_round(game)
-    g.human_turn(game)
-    g.end_round(game)
-
+    
 
 
 #print(s.retrieve_score(human_stack))
