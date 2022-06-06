@@ -30,7 +30,7 @@ def card_count_2():
     return count
 
 game = Game(human_stack, computer_stack, discard_stack,deal_stack,1, True,False)
-g.initialize_game(game)
+Game.initialize_game(game)
 while card_count_2() == 54 and game.cabo_called == False:
     Game.human_turn(game)
     Game.end_round(game)
