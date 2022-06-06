@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List
 from logic import *
 from logic import Stack as s
-from logic import Game as g
+from game import Game
 
 
 
@@ -32,8 +32,8 @@ def card_count_2():
 game = Game(human_stack, computer_stack, discard_stack,deal_stack,1, True,False)
 # g.initialize_game(game)
 while card_count_2() == 54 and game.cabo_called == False:
-    g.human_turn(game)
-    g.end_round(game)
+    Game.human_turn(game)
+    Game.end_round(game)
     
 
 
