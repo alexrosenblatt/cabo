@@ -46,6 +46,7 @@ CARD_VALUES = {
     "Joker": 0 
 }
 
+
 CARD_POWERS = {
     "Red King": 0,
     "Black King": 4,
@@ -62,4 +63,23 @@ CARD_POWERS = {
     "2": 0,
     "Ace": 0,
     "Joker": 0 
+}
+
+
+CARD_POWERS_tester = {
+    "Red King": 3,
+    "Black King": 3,
+    "Queen": 3,
+    "Jack": 3,
+    "10": 3,
+    "9": 3,
+    "8": 3,
+    "7": 3,
+    "6": 3,
+    "5": 3,
+    "4": 3,
+    "3": 3,
+    "2": 3,
+    "Ace": 3,
+    "Joker": 3 
 }

@@ -25,21 +25,29 @@ build_hand(deal_stack,human_stack)
 build_hand(deal_stack,computer_stack)
 transfer(deal_stack,discard_stack,0,0)
 
+def card_count_2():
+    count = len(deal_stack)+len(human_stack)+len(discard_stack)+len(computer_stack)
+    return count
+
 game = Game(human_stack, computer_stack, discard_stack,deal_stack,0, True)
     #g.initialize_game(game)
-g.start_round(game)
-g.human_turn(game)
-g.end_round(game)
-g.start_round(game)
-g.human_turn(game)
-g.end_round(game)
-g.start_round(game)
-g.human_turn(game)
-g.end_round(game)
-g.start_round(game)
-g.human_turn(game)
-g.end_round(game)
-g.start_round(game)
-g.human_turn(game)3
-g.end_round(game)
+while card_count_2() == 54:
+    g.start_round(game)
+    g.human_turn(game)
+    g.end_round(game)
+    g.start_round(game)
+    g.human_turn(game)
+    g.end_round(game)
+    g.start_round(game)
+    g.human_turn(game)
+    g.end_round(game)
+    g.start_round(game)
+    g.human_turn(game)
+    g.end_round(game)
+    g.start_round(game)
+    g.human_turn(game)
+    g.end_round(game)
+
+
+
 #print(s.retrieve_score(human_stack))
