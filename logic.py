@@ -2,7 +2,6 @@ from __future__ import annotations
 from collections import deque
 import random
 from typing import Any, List, Optional
-from traitlets import Int
 import constants as c
 from tabulate import tabulate
 from time import sleep
@@ -290,7 +289,8 @@ class Game():
             return self.human_stack[0],self.discard_stack[0] 
 
     def start_round(self) -> bool:
-        print(f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {self.turn_count}\n---------------------------------------------------------\n")
+        print(f"\n \n \n --------------------------------------------------------\n \t \t This is the start \
+              of turn {self.turn_count}\n---------------------------------------------------------\n")
         sleep(1)
         if self.open_hand == True:
             print(show_hand_table(self.computer_stack,True))
