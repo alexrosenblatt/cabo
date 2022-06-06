@@ -159,7 +159,6 @@ def show_hand_table(stack_name:Stack,open_hand: bool = False) -> str:
                     else:
                         hand.append([f"Position: {index}",'x'])
                         index += 1
-
         else:
             for cards in stack_name:
                     hand.append([f"Position: {index}",cards.name])
@@ -220,6 +219,7 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
         print(f"{card_name} is in position {index_n} in your hand.")
         sleep(4)
         return True
+      
     elif drawn_card_power == 2:
         peek_index = int(input("Which of your opponents cards would you like to look at? Respond with position number: \n"))
         r = power_controller(drawn_card_power,human_stack,computer_stack,None,peek_index)
@@ -228,6 +228,7 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
         print(f"{card_name} is in position {index_n} in your opponents hand.")
         sleep(4)
         return True
+      
     elif drawn_card_power == 3:
         source_index = int(input("Which of your cards would you like to swap? Please enter position number."))
         dest_index = int(input("Which of your opponents cards would you like to swap with? Please enter position number."))
@@ -235,6 +236,7 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
         print(f"Your card at position {source_index} was swapped with your opponents card at position {dest_index}.")
         sleep(4)
         return True
+      
     elif drawn_card_power == 4:
         source_index = int(input("Which of your cards would you like to swap? Please enter position number."))
         dest_index = int(input("Which of your opponents cards would you like to swap with? Please enter position number."))
