@@ -11,7 +11,8 @@ class Game():
         self.turn_count = turn_count
         self.deal_stack = deal_stack
     
-    def initialize_game(self) -> bool:
+    def initialize_game(self) -> bool: #TODO Enable use of player name and write instructions
+        '''Initial setup of game to gather human player information and show instructions. '''
         print("Welcome to Cabo!")
         name:str = input(f"Please tell me your name! \n")
         played_before:str = input(f"Have you played before? Enter Yes or No \n")
@@ -24,30 +25,32 @@ class Game():
         return True
 
     def call_cabo(self) -> bool:
+        '''Triggers cabo_called() to trigger final round and prints cabo back to terminal.'''
         print("CABOOOOOOO!")
         self.call_cabo_action()
         return True
     
     def call_cabo_action(self) -> bool:
+        '''Sets cabo state evaluated in main game while loop'''
         self.cabo_called = True
         return True
 
-    def cabo_state(self) -> bool:
-        if self.cabo_called == True:
-            return True    
-        else:
-            return False
-
     def discard_card(self) -> bool:
-        transfer(self.deal_stack,self.discard_stack,0,0,True) #TODO update method description to describe discard scenario
-        return True           #figure out how to end turn here
+        '''Transfers card from deal stack to discard stack '''
+        print_transfer(self.deal_stack,self.discard_stack,0,0,True)
+        return True          
     
-    def swap_draw_card(self,hand_index: int) -> tuple[Stack,Stack]:
-            transfer(self.human_stack,self.discard_stack,hand_index,0)
-            transfer(self.deal_stack,self.human_stack,0,hand_index)
-            return self.human_stack[0],self.discard_stack[0] 
+    def swap_draw_card(self,hand_index: int,players_stack) -> tuple[Stack,Stack]:
+        '''Enables a player to swap the "drawn" card with one in their hand 
+        and send the one in their hand to the discard pile.
+        
+        players_stack == players hand'''
+        print_transfer(self.human_stack,self.discard_stack,hand_index,0)
+        print_transfer(self.deal_stack,self.human_stack,0,hand_index)
+        return self.human_stack[0],self.discard_stack[0] 
 
     def start_round(self) -> bool:
+        '''Displays initial information of round to human player.'''
         print(f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {self.turn_count}\n---------------------------------------------------------\n")
         sleep(1)
         if self.open_hand == True:
@@ -65,7 +68,8 @@ class Game():
             print(Stack.show_placeholder_hand(self.human_stack))
             return True
 
-    def human_turn(self) -> bool: #TODO refactor this to work correctly
+    def human_turn(self) -> bool:
+        '''Gather human turn input and triggers game play mechanics. '''
         self.start_round()
         discard_card = self.discard_stack.get_top_card()
         r = int(input(f"\n The discard pile contains a {discard_card.name}. \
@@ -106,8 +110,8 @@ class Game():
                         while True:
                             hand_index: int = int(input("Which card would you like to replace?")) - 1
                             try:
-                                r = self.swap_draw_card(hand_index)
-                                print(f"You swapped discarded card {r[1].name} for a {r[0].name} at position {hand_index} in your hand.")
+                                r = self.swap_draw_card(hand_index,self.human_stack)
+                                print(f"{r[0].name} is now in position {hand_index} in your hand. {r[1].name} has been sent to the discard pile.")
                                 sleep(2)
                             except IndexError:
                                 print(f"\n Sorry - that card doesn't exist. Let's try again. \n")
@@ -139,12 +143,13 @@ class Game():
                 else:
                     break
             return True
-
-    def computer_turn(self):
+        
+    def computer_turn(self): #TODO make this work lol
         return
 
 
-    def end_round(self) -> bool:
+    def end_turn(self) -> bool:
+        '''Ends turn, increments turn count, and prints terminal indicator.'''
         print(f"\n \n \n --------------------------------------------------------\n \t \tThat concludes turn {self.turn_count}\n---------------------------------------------------------\n")
         self.turn_count_increment()
         sleep(2)
@@ -153,5 +158,6 @@ class Game():
         return True
     
     def turn_count_increment(self) -> bool:
+        '''increments turn count indicator'''
         self.turn_count += 1
         return True

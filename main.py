@@ -19,7 +19,7 @@ discard_stack = s("discard pile", None)
 shuffle(deal_stack)
 build_hand(deal_stack,human_stack)
 build_hand(deal_stack,computer_stack)
-transfer(deal_stack,discard_stack,0,0)
+print_transfer(deal_stack,discard_stack,0,0)
 
 def card_count_2(): #for testing against losing a card
     count = len(deal_stack)+len(human_stack)+len(discard_stack)+len(computer_stack)
@@ -27,8 +27,11 @@ def card_count_2(): #for testing against losing a card
 
 game = Game(human_stack, computer_stack, discard_stack,deal_stack,1, True,False)
 #Game.initialize_game(game)
-while card_count_2() == 54 and game.cabo_called == False:
+while game.cabo_called == False:
     Game.human_turn(game)
-    Game.end_round(game)
+    Game.end_turn(game)
+    if card_count_2() > 54:
+        raise ValueError("Too many Cards in play.")
+        
    
     
