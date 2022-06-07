@@ -1,3 +1,4 @@
+'''
 def use_power2(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) -> bool:
     if drawn_card_power == 1: #TODO rewrite to show revealed card with table rather than sentence
         peek_index = input("Which of your own cards would you like to look at? Respond with position number: \n")
@@ -60,3 +61,49 @@ def power_presenter(drawn_card_power: int, card_name1: str = '',card_name2: str 
 
 def get_top_card(stack_name: Stack) -> str:
         return stack_name[0].name
+
+
+        
+#    def show_card(self):
+#        return self.name
+ 
+
+    
+#   how can i rewrite this to have the default stack? #TODO seperate the presentation logic
+#def show_top_discard(stack_name: Stack) -> str:
+#        top_card = get_drawn_card(stack_name.)
+#        return f"\n The top card in the discard pile is: {top_card}."
+
+
+
+
+#    def get_data(self) -> bool:
+#        '''This returns the details of a specific card.'''
+#        print(f'{self.name},{self.value},{self.power}
+# ')
+#        return True
+
+
+#    def remove(self,index: int ):
+#        self.members.pop(index)
+#        return True
+    
+#    def add(self,index:int ,card:Card):
+#        self.members.insert(index,card)
+#        return True
+
+def show_placeholder_hand(stack_name: Stack) -> str:
+        hand:List[List[str]] = [["Position","Card"]]
+        cards:Card
+        response:str = ''
+        index = 1
+        for cards in stack_name:
+                hand.append([f"Position: {index}",'x'])
+                index += 1
+        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
+        response = f"\n\n\n{stack_name.name}: \n\n {table}"
+        return response
+
+
+
+'''

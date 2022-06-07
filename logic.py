@@ -6,45 +6,72 @@ import constants as c
 from tabulate import tabulate
 from time import sleep
 
-class Stack(deque): #TODO need to refactor this to not use deque?
-    '''Creates a hand and maintains functions related to a stack. '''
+class Stack(deque): #TODO need to refactor this to not inherit from deque?
+    '''Creates a hand and maintains functions related to a stack.
+    Takes in a name string and a list of cards.'''
     def __init__(self, name: str,members: List[Card]):
         self.members = members
         self.name = name
 
-    def remove(self,index: int ):
-        self.members.pop(index)
-        return True
-    
-    def add(self,index:int ,card:Card):
-        self.members.insert(index,card)
-        return True
-
     def retrieve_score(self) -> int:
+        '''Returns sum of all cards in current stack.'''
         sum: int = 0
         for c in self:
             sum += c.value
         return sum
     
-    def print_draw_card_preview(self,index:int = 0) -> str:
+    def print_draw_card_preview(self,index:int = 0) -> str: #TODO refactor this to a presentation class
         drawn_card = self[index]
         return f"\n You've drawn a {drawn_card.name}."
     
-    def get_top_card(self) -> str:
-        return self[0].name
+    def get_top_card(self) -> Card:
+        return self[0]
+
+    def show_placeholder_hand(self) -> str:
+        hand:List[List[str]] = [["Position","Card"]]
+        cards:Card
+        response:str = ''
+        index = 1
+        for cards in self:
+                hand.append([f"Position: {index}",'x'])
+                index += 1
+        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
+        response = f"\n\n\n{self.name}: \n\n {table}"
+        return response
+
+    def show_hand_table(self,open_hand: bool = False) -> str:
+        hand:list[list[str]] = [["Position","Card"]]
+        cards:Card
+        response:str = ''
+        index = 1
+        if open_hand == False:
+            for cards in self:
+                    if index < 3:
+                        hand.append([f"Position: {index}",cards.name])
+                        index += 1
+                    else:
+                        hand.append([f"Position: {index}",'x'])
+                        index += 1
+        else:
+            for cards in self:
+                    hand.append([f"Position: {index}",cards.name])
+                    index += 1
+        response = self.tabulate_hand(hand,self)
+        return response
+    
+    def tabulate_hand(self,hand:list[list[str]],stack_name:Stack) -> str:
+        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
+        response = f"\n\n\n{self.name}: \n\n {table}"
+        return response
+
         
 
-class Card():  #add logic to show human hand vs. computer hand
+class Card():  #TODO add logic to show human hand vs. computer hand
     '''This creates a cabo card.'''
     def __init__(self,name: str,val: int = 0,power: int =0):
         self.name = name
         self.value = val
         self.power = power     
-
-    def get_data(self) -> bool:
-        '''This returns the details of a specific card.'''
-        print(f'{self.name},{self.value},{self.power}')
-        return True
 
     def get_card_data(self) -> str:
         return self.name
@@ -70,27 +97,12 @@ class Card():  #add logic to show human hand vs. computer hand
         for key,value in c.POWERS.items():
             if self.power == value:
                 power_value = key
-        return power_value
-
-            
-    
+                return power_value
+        
     def print_card_powers_string(self) -> str:
         power_string = self.return_card_powers()
         power_string = f"This top card has the ability to:{power_string}" # TODO fix this to show strings
         return power_string
-
-
-        
-    def show_card(self):
-        return self.name
- 
-
-    
-    # how can i rewrite this to have the default stack? #TODO seperate the presentation logic
-def show_top_discard(stack_name: Stack) -> str:
-        top_card = stack_name.get_top_card()
-        return f"\n The top card in the discard pile is: {top_card}."
-
 
 
 
@@ -104,14 +116,13 @@ def build_deck() -> list[Card]:
         Card.update_powers(card)
     return new_deck
 
-def build_hand(source_stack:Stack,dest_stack:Stack) -> bool:
-        n: int
-        n = 0 
+def build_hand(source_stack:Stack,dest_stack:Stack) -> bool:        
+        n:int = 0 
         while n < 4:
             transfer(source_stack,dest_stack,0,n)
             n += 1
         return True
-
+        
 def transfer_action(source_stack: Stack,dest_stack: Stack, source_index:int = 0, dest_index:int = 0,describe:bool = False) -> tuple[str,str]:
         transfer_card:Card = source_stack[source_index]
         del(source_stack[source_index])
@@ -130,7 +141,6 @@ def transfer(source_stack: Stack,dest_stack: Stack, source_index:int = 0, dest_i
         print(f"{transfer_results[0]} was transferred to {transfer_results[1]}.")
     return True
 
-
 def swap(source_stack: Stack,dest_stack: Stack, source_index:int, dest_index:int) -> tuple[str,str]:
         swap_card1:Card = source_stack[source_index]
         swap_card2:Card = dest_stack[dest_index]
@@ -146,50 +156,8 @@ def shuffle(stack_name: Stack) -> bool:
     return True
 
 
-def show_hand_table(stack_name:Stack,open_hand: bool = False) -> str:
-        hand:list[list[str]] = [["Position","Card"]]
-        cards:Card
-        response:str = ''
-        index = 1
-        if open_hand == False:
-            for cards in stack_name:
-                    if index < 3:
-                        hand.append([f"Position: {index}",cards.name])
-                        index += 1
-                    else:
-                        hand.append([f"Position: {index}",'x'])
-                        index += 1
-        else:
-            for cards in stack_name:
-                    hand.append([f"Position: {index}",cards.name])
-                    index += 1
-        response = tabulate_hand(hand,stack_name)
-        return response
-
-def tabulate_hand(hand:list[list[str]],stack_name:Stack) -> str:
-        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
-        response = f"\n\n\n{stack_name.name}: \n\n {table}"
-        return response
-
-
-def show_placeholder_hand(stack_name: Stack) -> str:
-        hand:List[List[str]] = [["Position","Card"]]
-        cards:Card
-        response:str = ''
-        index = 1
-        for cards in stack_name:
-                hand.append([f"Position: {index}",'x'])
-                index += 1
-        table = tabulate(hand,tablefmt="fancy_grid",headers='firstrow')
-        response = f"\n\n\n{stack_name.name}: \n\n {table}"
-        return response
-
-
 def get_drawn_card(stack_name: Stack) -> Card:
         return stack_name[0]
-
-
-
 
 
 def power_controller(drawn_card_power: int, human_stack: Stack,computer_stack: Stack,dest_position:int | None = None, source_position:int | None = None) -> tuple[Any,Any]: #TODO fix typing here

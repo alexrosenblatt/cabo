@@ -42,7 +42,7 @@ class Game():
         transfer(self.deal_stack,self.discard_stack,0,0,True) #TODO update method description to describe discard scenario
         return True           #figure out how to end turn here
     
-    def swap_draw_card(self,hand_index) -> tuple[Stack,Stack]:
+    def swap_draw_card(self,hand_index: int) -> tuple[Stack,Stack]:
             transfer(self.human_stack,self.discard_stack,hand_index,0)
             transfer(self.deal_stack,self.human_stack,0,hand_index)
             return self.human_stack[0],self.discard_stack[0] 
@@ -51,29 +51,23 @@ class Game():
         print(f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {self.turn_count}\n---------------------------------------------------------\n")
         sleep(1)
         if self.open_hand == True:
-            print(show_hand_table(self.computer_stack,True))
-            print(show_hand_table(self.human_stack,True))
-            #print(show_top_discard(self.discard_stack))
-            #print(Stack.print_draw_card_preview(self.deal_stack))
+            print(Stack.show_hand_table(self.computer_stack,True))
+            print(Stack.show_hand_table(self.human_stack,True))
             sleep(2)
             return True
-        elif self.turn_count == 0 and self.open_hand == False:
-            print(show_placeholder_hand(self.computer_stack))
-            print(show_hand_table(self.human_stack))
-            #print(show_top_discard(self.discard_stack))
-            #print(Stack.print_draw_card_preview(self.deal_stack))
+        elif self.turn_count == 1 and self.open_hand == False:
+            print(Stack.show_placeholder_hand(self.computer_stack))
+            print(Stack.show_hand_table(self.human_stack))
             sleep(2)
             return True
         else:
-            print(show_placeholder_hand(self.computer_stack))
-            print(show_placeholder_hand(self.human_stack))
-            #print(show_top_discard(self.discard_stack))
-            #print(Stack.print_draw_card_preview(self.deal_stack))
+            print(Stack.show_placeholder_hand(self.computer_stack))
+            print(Stack.show_placeholder_hand(self.human_stack))
             return True
 
     def human_turn(self) -> bool: #TODO refactor this to work correctly
         self.start_round()
-        discard_card = get_drawn_card(self.discard_stack)
+        discard_card = self.discard_stack.get_top_card()
         r = int(input(f"\n The discard pile contains a {discard_card.name}. \
             \n \n Would you like to swap this with a card in your own hand? \
             \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "))
