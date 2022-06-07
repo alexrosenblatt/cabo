@@ -83,7 +83,7 @@ class Game():
                     sleep(1)
                 else:
                     break
-                return True
+            return True
         elif r == 0:
             while True:
                 sleep(1)
@@ -148,6 +148,8 @@ class Game():
         print(f"\n \n \n --------------------------------------------------------\n \t \tThat concludes turn {self.turn_count}\n---------------------------------------------------------\n")
         self.turn_count_increment()
         sleep(2)
+        cls = lambda: print('\n' * 100)
+        cls()
         return True
     
     def turn_count_increment(self) -> bool:

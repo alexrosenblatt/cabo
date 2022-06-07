@@ -1,8 +1,10 @@
 from __future__ import annotations
+from turtle import clear
 from typing import List
 from logic import *
 from logic import Stack as s
 from game import Game
+import os 
 
 
 
@@ -28,4 +30,5 @@ game = Game(human_stack, computer_stack, discard_stack,deal_stack,1, True,False)
 while card_count_2() == 54 and game.cabo_called == False:
     Game.human_turn(game)
     Game.end_round(game)
+   
     
