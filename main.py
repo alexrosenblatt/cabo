@@ -1,5 +1,4 @@
 from __future__ import annotations
-from turtle import clear
 from typing import List
 from logic import *
 from logic import Stack as s
