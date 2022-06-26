@@ -15,17 +15,17 @@ class Stack(deque): #TODO need to refactor this to not inherit from deque?
 
     def retrieve_sum_value(self) -> int:
         '''Returns sum of the value of all cards in current stack.'''
-        sum: int = 0
-        for c in self:
-            sum += c.value
-        return sum
+        #sum: int = 0
+        #for c in self:
+        #sum += c.value
+        return sum(c.value for c in self)
     
-    def print_draw_card_preview(self,index:int = 0) -> str: #TODO refactor this to a presentation class
+    def format_draw_card_preview(self,index:int = 0) -> str: #TODO refactor this to a presentation class
         '''Prints to the terminal the name of the Stacks current card in index.'''
         drawn_card = self[index]
         return f"\n You've drawn a {drawn_card.name}."
     
-    def get_top_card(self) -> Card:
+    def top_card(self) -> Card:
         '''Returns the top card of the stack AKA card in index 0'''
         return self[0]
 
@@ -34,7 +34,6 @@ class Stack(deque): #TODO need to refactor this to not inherit from deque?
         table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate(). '''
         hand:List[List[str]] = [["Position","Card"]]
         cards:Card
-        response:str = ''
         index = 1
         for cards in self:
                 hand.append([f"Position: {index}",'x'])
@@ -49,9 +48,8 @@ class Stack(deque): #TODO need to refactor this to not inherit from deque?
             '''
         hand:list[list[str]] = [["Position","Card"]]
         cards:Card
-        response:str = ''
         index = 1
-        if open_hand == False:
+        if not open_hand:
             for cards in self:
                     if index < 3:
                         hand.append([f"Position: {index}",cards.name])

@@ -68,21 +68,28 @@ class Game():
             print(Stack.show_placeholder_hand(self.human_stack))
             return True
 
-    def human_turn(self) -> bool:
+    def human_turn(self):
         '''Gather human turn input and triggers game play mechanics. '''
         self.start_round()
-        discard_card = self.discard_stack.get_top_card()
-        r = int(input(f"\n The discard pile contains a {discard_card.name}. \
-            \n \n Would you like to swap this with a card in your own hand? \
-            \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "))
+        discard_card = self.discard_stack.top_card()
+        while True:
+            try:
+                r = int(input(f"\n The discard pile contains a {discard_card.name}. \
+                    \n \n Would you like to swap this with a card in your own hand? \
+                    \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "))
+            except ValueError:
+                print(f"\n Please enter a valid number. Let's try again. \n")
+                sleep(1)
+            else:
+                break
         if r == 1:
             while True:
-                hand_index: int = int(input("Which card would you like to replace?")) - 1
                 try:
+                    hand_index: int = int(input("Which card would you like to replace?")) - 1
                     r = swap(self.discard_stack,self.human_stack,0,hand_index)
                     print(f"You swapped discarded card {r[1]} for a {r[0]} at position {hand_index} in your hand.")
                     sleep(2)
-                except IndexError:
+                except (IndexError,ValueError):
                     print(f"\n Sorry - that card doesn't exist. Let's try again. \n")
                     sleep(1)
                 else:
@@ -91,7 +98,7 @@ class Game():
         elif r == 0:
             while True:
                 sleep(1)
-                print(Stack.print_draw_card_preview(self.deal_stack))
+                print(Stack.format_draw_card_preview(self.deal_stack))
                 print(Card.print_card_powers_string(self.deal_stack[0]))
                 actions:int = int(input("\n What actions would you like to take?  \
                                         \n \t 1. Use power on drawn card  \
@@ -143,6 +150,7 @@ class Game():
                 else:
                     break
             return True
+
         
     def computer_turn(self): #TODO make this work lol
         return
@@ -161,3 +169,5 @@ class Game():
         '''increments turn count indicator'''
         self.turn_count += 1
         return True
+
+
