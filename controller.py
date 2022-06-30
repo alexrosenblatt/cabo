@@ -1,15 +1,15 @@
 from __future__ import annotations
 from typing import List
-from logic import *
-from logic import Stack as s
+from model import *
+from model import Stack as s
 from game import Game
-import os 
+from view import *
 
 
 
 # setup initial ss with main deck as deal pile, human_stack, computer_stack.
 deal_stack = build_deck()
-0
+
 human_stack = s("Human's hand",None)
 computer_stack = s("Computer's Hand", None)
 discard_stack = s("discard pile", None)
@@ -18,7 +18,7 @@ discard_stack = s("discard pile", None)
 shuffle(deal_stack)
 build_hand(deal_stack,human_stack)
 build_hand(deal_stack,computer_stack)
-print_transfer(deal_stack,discard_stack,0,0)
+make_transfer(deal_stack,discard_stack,0,0)
 
 def card_count_2(): #for testing against losing a card
     count = len(deal_stack)+len(human_stack)+len(discard_stack)+len(computer_stack)

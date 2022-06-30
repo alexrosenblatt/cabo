@@ -20,10 +20,10 @@ class Stack(deque): #TODO need to refactor this to not inherit from deque?
         #sum += c.value
         return sum(c.value for c in self)
     
-    def format_draw_card_preview(self,index:int = 0) -> str: #TODO refactor this to a presentation class
+    def present_draw_card_preview(self,index:int = 0) -> None:
         '''Prints to the terminal the name of the Stacks current card in index.'''
         drawn_card = self[index]
-        return f"\n You've drawn a {drawn_card.name}."
+        print(f"\n You've drawn a {drawn_card.name}.")
     
     def top_card(self) -> Card:
         '''Returns the top card of the stack AKA card in index 0'''
@@ -42,7 +42,7 @@ class Stack(deque): #TODO need to refactor this to not inherit from deque?
         response = f"\n\n\n{self.name}: \n\n {table}"
         return response
 
-    def show_hand_table(self,open_hand: bool = False) -> str:
+    def print_hand_table(self,open_hand: bool = False) -> None:
         '''Returns a string containing a table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate().
             If open hand == False, it reveals the first two cards to the player. If open_hand == True, it shows all cards.
             '''
@@ -62,7 +62,7 @@ class Stack(deque): #TODO need to refactor this to not inherit from deque?
                     hand.append([f"Position: {index}",cards.name])
                     index += 1
         response = self.tabulate_hand(hand,self)
-        return response
+        print(response)
     
     def tabulate_hand(self,hand:list[list[str]],stack_name:Stack) -> str:
         '''Uses tabulate module to produce terminal formatted tables.'''
@@ -100,18 +100,20 @@ class Card():  #TODO add logic to show human hand vs. computer hand
                 return True
         return False
 
-    def return_card_powers(self) -> str:
+    def return_card_powers(self) -> str|None:
         '''Returns value associated with the power defined in Constants of the Card'''
         for key,value in c.POWERS.items():
             if self.power == value:
                 power_value = key
                 return power_value
+            else:
+                return None
         
-    def print_card_powers_string(self) -> str:
+    def present_card_powers_string(self) -> None:
         '''Prints a string to terminal of the power associated with the Card'''
         power_string = self.return_card_powers()
         power_string = f"This top card has the ability to:{power_string}" # TODO fix this to show strings
-        return power_string
+        print(power_string)
 
 
 
@@ -131,7 +133,7 @@ def build_hand(source_stack:Stack,dest_stack:Stack) -> bool:
     '''Creates initial hands for players with four cards'''        
     n:int = 0 
     while n < 4:
-        print_transfer(source_stack,dest_stack,0,n)
+        make_transfer(source_stack,dest_stack,0,n)
         n += 1
     return True
         
@@ -148,7 +150,7 @@ def transfer_action(source_stack: Stack,dest_stack: Stack, source_index:int = 0,
     dest_stack.insert(dest_index,transfer_card)    
     return transfer_card.name,dest_stack.name
 
-def print_transfer(source_stack: Stack,dest_stack: Stack, source_index:int = 0, dest_index:int = 0,describe:bool = False) -> bool:
+def make_transfer(source_stack: Stack,dest_stack: Stack, source_index:int = 0, dest_index:int = 0,describe:bool = False) -> bool:
     '''Copies a card in one stack to destination stack with:
           - source stack as source_stack
           - destination stack as dest_stack
@@ -159,7 +161,7 @@ def print_transfer(source_stack: Stack,dest_stack: Stack, source_index:int = 0, 
           Set 'describe' to True to print a record of the transfer to the terminal.'''    
     transfer_results = transfer_action(source_stack,dest_stack,source_index,dest_index)
     if describe == True:
-        print(f"{transfer_results[0]} was transferred to {transfer_results[1]}.")
+        present_transfer(transfer_results[0],transfer_results[1])
     return True
 
 def swap(source_stack: Stack,dest_stack: Stack, source_index:int, dest_index:int) -> tuple[str,str]:
@@ -184,7 +186,7 @@ def get_drawn_card(stack_name: Stack) -> Card:
     return stack_name[0]
 
 
-def power_controller(drawn_card_power: int, human_stack: Stack,computer_stack: Stack,dest_position:int | None = None, source_position:int | None = None) -> tuple[Any,Any]: #TODO fix typing here
+def power_controller(drawn_card_power: int, human_stack: Stack,computer_stack: Stack,dest_position:int | None = None, source_position:int | None = None) -> tuple[Any,Any]|None: #TODO fix typing here
     '''Defines and triggers card power actions. '''
     if source_position != None: 
         source_index = (source_position) - 1
@@ -201,6 +203,8 @@ def power_controller(drawn_card_power: int, human_stack: Stack,computer_stack: S
     elif drawn_card_power == 4:
         swap_results = swap(human_stack,computer_stack,source_index,dest_index)
         return swap_results
+    else:
+        return
 
 
 def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) -> bool:
@@ -243,3 +247,5 @@ def use_power(drawn_card_power: int,human_stack: Stack,computer_stack: Stack) ->
     else:
         return False
  
+def present_transfer(source_card,dest_card) -> None:
+    print(f"{source_card} was transferred to {dest_card}.")
