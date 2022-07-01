@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List
 from model import *
 from model import Stack as s
-from game import Game
 from view import *
 
 
