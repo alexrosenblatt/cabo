@@ -6,7 +6,6 @@ from view import *
 
 # setup initial ss with main deck as deal pile, human_stack, computer_stack.
 deal_stack = build_deck()
-
 human_stack = s("Human's hand", None)
 computer_stack = s("Computer's Hand", None)
 discard_stack = s("discard pile", None)
@@ -25,10 +24,12 @@ def card_count_2():  #for testing against losing a card
         return ValueError("Too many Cards in play.")
 
 
+# main routine
 game = Game(human_stack, computer_stack, discard_stack, deal_stack, 1, True,
-            False)
+            False, computer_difficulty)
 #Game.initialize_game(game)
-while game.cabo_called == False:
+while not game.cabo_called:
     Game.human_turn(game)
+    Game.computer_turn(game)
     Game.end_turn(game)
     card_count_2()

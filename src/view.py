@@ -6,6 +6,7 @@ from model import *
 def present_cabo() -> bool:
     '''Triggers cabo_called() to trigger final round and prints cabo back to terminal. Sets cabo called game class to True.'''
     print("CABOOOOOOO!")
+    sleep(3)
     return True
 
 
