@@ -14,6 +14,7 @@ def present_round_spacer(turn_count) -> None:
     print(
         f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {turn_count}\n---------------------------------------------------------\n"
     )
+    sleep(1)
 
 
 def present_swap_discard_prompt(discard_card) -> int:
@@ -87,13 +88,12 @@ def present_end_round(turn_count) -> None:
 def present_intro():
     print("Welcome to Cabo!")
     name: str = input(f"Please tell me your name! \n")
-    played_before: str = input(f"Have you played before? Enter Yes or No \n")
-    played_before = played_before.lower()
-    if played_before == 'yes':
-        return True
-    if played_before == 'no':
-        print(f"/n Placeholder for Instructions \n")
-        return False
+    #played_before: str = input(f"Have you played before? Enter Yes or No \n")
+    #played_before = played_before.lower()
+    #if played_before == 'yes':
+    #   pass
+    #if played_before == 'no':
+    #    print(f"/n Placeholder for Instructions \n")
     return name
 
 

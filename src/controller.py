@@ -26,8 +26,9 @@ def card_count_2():  #for testing against losing a card
 
 # main routine
 game = Game(human_stack, computer_stack, discard_stack, deal_stack, 1, True,
-            False, computer_difficulty)
-#Game.initialize_game(game)
+            False)
+player2 = Player('Computer', 'Computer', 1)
+Game.initialize_game(game)
 while not game.cabo_called:
     Game.human_turn(game)
     Game.computer_turn(game)

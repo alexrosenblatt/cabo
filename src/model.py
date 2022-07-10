@@ -28,7 +28,6 @@ class Stack(deque):  # TODO need to refactor this to not inherit from deque?
         """Returns a string containing the name of the hand and a
         table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate()."""
         hand: List[List[str]] = [["Position", "Card"]]
-        cards: Card
         index = 1
         for cards in self:
             hand.append([f"Position: {index}", "x"])
@@ -85,24 +84,22 @@ class Game:
                  open_hand: bool = False,
                  cabo_called: bool = False,
                  computer_difficulty: str = 'Easy'):
-        self.turn_count = turn_count
         self.open_hand = open_hand  # set this to see every card in each hand each round
+        
         self.human_stack = human_stack
         self.computer_stack = computer_stack
         self.discard_stack = discard_stack
+        self.deal_stack = deal_stack
+
         self.cabo_called = cabo_called
         self.turn_count = turn_count
-        self.deal_stack = deal_stack
-        self.name = ""
-        self.c_diff = computer_difficulty
-        self.c_hand_memory = ()
-        self.c_opponent_memory = ()
+        
 
     def initialize_game(
             self
     ) -> None:  # TODO Enable use of player name and write instructions
         """Initial setup of game to gather human player information and show instructions."""
-        self.name = present_intro()
+        Player1 = Player(present_intro(), 'Computer')
 
     def call_cabo_action(self) -> bool:
         """Sets cabo state evaluated in main game while loop"""
@@ -127,7 +124,6 @@ class Game:
     def start_round(self) -> bool:
         """Displays initial information of round to human player."""
         present_round_spacer(self.turn_count)
-        sleep(1)
         if self.open_hand == True:
             print_hand_table(self.computer_stack, True)
             print_hand_table(self.human_stack, True)
@@ -142,6 +138,8 @@ class Game:
             Stack.show_placeholder_hand(self.computer_stack)
             Stack.show_placeholder_hand(self.human_stack)
             return True
+
+    def turn_controls(self,)
 
     def human_turn(self):
         """Gather human turn input and triggers game play mechanics."""
@@ -162,7 +160,7 @@ class Game:
             return True
         elif r == 0:
             while True:
-                sleep(1)
+                sleep(1)  # TODO remove this
                 present_draw_card_preview(self.deal_stack[0])
                 present_card_powers_string(self.deal_stack[0])
                 actions = present_action_prompt()
@@ -173,7 +171,7 @@ class Game:
                         if self.call_cabo_action() == True:
                             present_cabo()
                         return True
-                    elif actions == 3:
+                    elif actions == 3:  #swap drawn card
                         while True:
                             hand_index: int = present_swap_card_prompt() - 1
                             try:
@@ -189,7 +187,7 @@ class Game:
                         self.discard_card()
                         sleep(3)
                         return True
-                    elif actions == 1:
+                    elif actions == 1:  #use power
                         top_card = get_drawn_card(self.deal_stack)
                         drawn_card_power = top_card.power
                         if drawn_card_power == 0:
@@ -328,7 +326,7 @@ def power_controller(
     human_stack: Stack,
     computer_stack: Stack,
     dest_position: int | None = None,
-    source_position: int | None = None,
+    source_position: int | None = None
 ) -> tuple[Any, Any]:  # TODO fix typing here
     """Defines and triggers card power actions."""
     if source_position != None:
@@ -388,3 +386,12 @@ def use_power(drawn_card_power: int, human_stack: Stack,
         return True
     else:
         return False
+
+
+class Player:
+
+    def __init__(self, name: str, type: str, difficulty: int):
+        self.name = name
+        self.type = type
+        self.memory = {}
+        self.difficulty = difficulty
