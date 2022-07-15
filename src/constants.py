@@ -1,10 +1,10 @@
 POWERS = {
-    "look_at_own_card" : 1,
+    "look_at_own_card": 1,
     "look_at_other_card": 2,
     "blind_swap": 3,
     "open_swap": 4,
     "none": 0
-    }
+}
 
 CARD_COUNTS_4 = {
     "Queen": 4,
@@ -21,12 +21,7 @@ CARD_COUNTS_4 = {
     "Ace": 4,
 }
 
-CARD_COUNTS_2 = {
-    "Red King": 2,
-    "Black King": 2,
-    "Joker": 2
-}
-
+CARD_COUNTS_2 = {"Red King": 2, "Black King": 2, "Joker": 2}
 
 CARD_VALUES = {
     "Red King": -1,
@@ -43,9 +38,8 @@ CARD_VALUES = {
     "3": 3,
     "2": 2,
     "Ace": 1,
-    "Joker": 0 
+    "Joker": 0
 }
-
 
 CARD_POWERS = {
     "Red King": 0,
@@ -62,9 +56,8 @@ CARD_POWERS = {
     "3": 0,
     "2": 0,
     "Ace": 0,
-    "Joker": 0 
+    "Joker": 0
 }
-
 
 CARD_POWERS_tester = {
     "Red King": 3,
@@ -81,5 +74,5 @@ CARD_POWERS_tester = {
     "3": 3,
     "2": 3,
     "Ace": 3,
-    "Joker": 3 
+    "Joker": 3
 }

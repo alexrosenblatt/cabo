@@ -77,18 +77,16 @@ class Card:  # TODO add logic to show human hand vs. computer hand
 class Game:
 
     def __init__(self,
-                 human_stack,
-                 computer_stack,
+                 player_stacks,
                  discard_stack,
                  deal_stack,
                  turn_count: int = 1,
                  open_hand: bool = False,
                  cabo_called: bool = False,
-                 computer_difficulty: str = 'Easy'):
+                 computer_difficulty: int = 1):
         self.turn_count = turn_count
         self.open_hand = open_hand  # set this to see every card in each hand each round
-        self.human_stack = human_stack
-        self.computer_stack = computer_stack
+        self.player_stacks = player_stacks
         self.discard_stack = discard_stack
         self.cabo_called = cabo_called
         self.turn_count = turn_count
