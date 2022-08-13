@@ -14,6 +14,7 @@ def present_round_spacer(turn_count) -> None:
     print(
         f"\n \n \n --------------------------------------------------------\n \t \t This is the start of turn {turn_count}\n---------------------------------------------------------\n"
     )
+    sleep(1)
 
 
 def present_swap_discard_prompt(discard_card) -> int:
@@ -176,7 +177,7 @@ def present_draw_card_preview(card_obj) -> None:
     print(f"\n You've drawn a {card_obj.name}.")
 
 
-def print_hand_table(stack_obj, open_hand: bool = False) -> None:
+def present_hand_table(stack_obj, open_hand: bool = False) -> None:
     '''Returns a string containing a table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate().
             If open hand == False, it reveals the first two cards to the player. If open_hand == True, it shows all cards.
             '''
@@ -197,6 +198,7 @@ def print_hand_table(stack_obj, open_hand: bool = False) -> None:
             index += 1
     response = tabulate_hand(stack_obj, hand)
     print(response)
+    
 
 
 def tabulate_hand(stack_obj, hand: list[list[str]]) -> str:  # TODO
@@ -204,3 +206,17 @@ def tabulate_hand(stack_obj, hand: list[list[str]]) -> str:  # TODO
     table = tabulate(hand, tablefmt="fancy_grid", headers='firstrow')
     response = f"\n\n\n{stack_obj.name}: \n\n {table}"
     return response
+
+
+def show_placeholder_hand(stack_obj) -> str:
+    """Returns a string containing the name of the hand and a
+    table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate()."""
+    hand: List[List[str]] = [["Position", "Card"]]
+    cards: Card
+    index = 1
+    for cards in stack_obj:
+        hand.append([f"Position: {index}", "x"])
+        index += 1
+    table = tabulate(hand, tablefmt="fancy_grid", headers="firstrow")
+    tabulated_han = f"\n\n\n{stack_obj.name}: \n\n {table}"
+    return tabulated_han
