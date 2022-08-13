@@ -79,7 +79,6 @@ class Game:
                  open_hand: bool = False,
                  cabo_called: bool = False,
                  computer_difficulty: str = 'Easy'):
-        self.turn_count = turn_count
         self.open_hand = open_hand  # set this to see every card in each hand each round
         self.human_pile = human_pile
         self.computer_pile = computer_pile
@@ -97,7 +96,7 @@ class Game:
             self
     ) -> None:  # TODO Enable use of player name and write instructions
         """Initial setup of game to gather human player information and show instructions."""
-        self.name = present_intro()
+        Player1 = Player(present_intro(), 'Computer')
 
     def call_cabo_action(self) -> bool:
         """Sets cabo state evaluated in main game while loop"""
@@ -159,7 +158,7 @@ class Game:
             return True
         elif swap_discard_card_response == 0:
             while True:
-                sleep(1)
+                sleep(1)  # TODO remove this
                 present_draw_card_preview(self.deal_stack[0])
                 present_card_powers_string(self.deal_stack[0])
                 turn_action_choice = present_action_prompt()
@@ -386,3 +385,12 @@ def use_power(drawn_card_power: int, source_pile: Stack,
         return True
     else:
         return False
+
+
+class Player:
+
+    def __init__(self, name: str, type: str, difficulty: int):
+        self.name = name
+        self.type = type
+        self.memory = {}
+        self.difficulty = difficulty
