@@ -3,12 +3,21 @@ from __future__ import annotations
 import random
 from collections import deque
 from time import sleep
+from tokenize import String
 from typing import Any, List, Optional
+from xmlrpc.client import Boolean
 
 from tabulate import tabulate
 
 import constants as c
 from view import *
+import logging
+
+logging.basicConfig(filename='log.log',
+                    filemode='w',
+                    encoding='utf-8',
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(lineno)d %(message)s')
 
 
 class Stack(deque):  # TODO need to refactor this to not inherit from deque?
@@ -18,6 +27,14 @@ class Stack(deque):  # TODO need to refactor this to not inherit from deque?
     def __init__(self, name: str, members: List[Card]):
         self.members = members
         self.name = name
+
+    def __str__(self):
+        hand_list = []
+        cards: Card
+        for cards in self:
+            card_name = cards.get_card_name()
+            hand_list.append(card_name)
+        return f"{self.name} contains {hand_list})"
 
     def get_pile_value(self) -> int:
         """Returns sum of the value of all cards in current stack."""
@@ -35,6 +52,9 @@ class Card:  # TODO add logic to show human hand vs. computer hand
         self.name = name
         self.value = value
         self.power = power
+
+    def __str__(self):
+        return self.name
 
     def get_card_name(self) -> str:
         """Returns name attribute of Card"""
@@ -74,23 +94,23 @@ class Game:
                  human_pile,
                  computer_pile,
                  discard_pile,
-                 deal_stack,
+                 deal_pile,
+                 computer_pile_memory,
                  turn_count: int = 1,
                  open_hand: bool = False,
                  cabo_called: bool = False,
                  computer_difficulty: str = 'Easy'):
-        self.open_hand = open_hand  # set this to see every card in each hand each round
-        self.human_pile = human_pile
-        self.computer_pile = computer_pile
-        self.discard_pile = discard_pile
-        self.cabo_called = cabo_called
-        self.turn_count = turn_count
-        self.deal_stack = deal_stack
-        self.name = ""
-        self.computer_diff = computer_difficulty
-        self.computer_pile_memory = (self.computer_pile[0],
-                                     self.computer_pile[1])
-        self.computer_opponent_memory = ()
+        self.open_hand: bool = open_hand  # set this to see every card in each hand each round
+        self.human_pile: Stack = human_pile
+        self.computer_pile: Stack = computer_pile
+        self.discard_pile: Stack = discard_pile
+        self.cabo_called: bool = cabo_called
+        self.turn_count: int = turn_count
+        self.deal_pile: Stack = deal_pile
+        self.computer_pile_memory: Stack = computer_pile_memory
+        self.name: str = ""
+        self.computer_diff: str = computer_difficulty
+        self.computer_opponent_memory = ["computer_opponent_memory"]
 
     def initialize_game(
             self
@@ -105,18 +125,20 @@ class Game:
 
     def discard_drawn_card(self) -> bool:
         """Transfers card from deal stack to discard stack"""
-        make_transfer(self.deal_stack, self.discard_pile, 0, 0, True)
+        make_transfer(self.deal_pile, self.discard_pile, 0, 0, True)
         return True
 
     def swap_drawn_card(
-        self, hand_index: int, destination_pile
-    ) -> tuple[Stack, Stack]:  #todo refactor this to make it player agnostic
-        """Enables a player to swap the "drawn" card with one in their hand
-        and send the one in their hand to the discard pile.
+        self,
+        pile_index: int,
+        destination_pile,
+    ) -> tuple[Stack, Stack]:
+        """Enables a player to swap the "drawn" card with one in their pile
+        and send the one in their pile to the discard pile.
 
-        players_stack == players hand"""
-        make_transfer(destination_pile, self.discard_pile, hand_index, 0)
-        make_transfer(self.deal_stack, destination_pile, 0, hand_index)
+        players_stack == players pile"""
+        make_transfer(destination_pile, self.discard_pile, pile_index, 0)
+        make_transfer(self.deal_pile, destination_pile, 0, pile_index)
         return destination_pile[0], self.discard_pile[0]
 
     def start_round(self) -> bool:
@@ -159,8 +181,8 @@ class Game:
         elif swap_discard_card_response == 0:
             while True:
                 sleep(1)  # TODO remove this
-                present_draw_card_preview(self.deal_stack[0])
-                present_card_powers_string(self.deal_stack[0])
+                present_draw_card_preview(self.deal_pile[0])
+                present_card_powers_string(self.deal_pile[0])
                 turn_action_choice = present_action_prompt()
                 try:
                     if turn_action_choice == 5:  # end game
@@ -189,7 +211,7 @@ class Game:
                         sleep(3)
                         return True
                     elif turn_action_choice == 1:
-                        drawn_card = get_drawn_card(self.deal_stack)
+                        drawn_card = get_drawn_card(self.deal_pile)
                         drawn_card_power = drawn_card.power
                         if drawn_card_power == 0:
                             raise ValueError
@@ -212,14 +234,71 @@ class Game:
 
     def computer_turn(self):  # TODO make this work lol
         self.start_round()
-        value_array = []
-        discard_card = self.discard_pile.get_top_card()
-        discard_card_power = discard_card.get_card_value()
-        computer_hand_value = [
-            card.get_card_value() for card in self.computer_pile_memory
-        ]
+        self.computer_turn_discard_card_check()
 
         return
+
+    def computer_turn_discard_card_check(self):
+        '''Iterates through set of cards in current memory of computers pile, 
+        and evaluates if the drawn card is of greater value. 
+        If so, it replaces the card with the current discard card.
+        
+        Current strategy is too simplistic. Rewrite card memory to be list of tuples'''
+        discard_card = self.discard_pile.get_top_card()
+        upper_range: float = 1
+        lower_range: float = .5
+
+        def discard_calculation():
+            if discard_card.get_card_value() >= 0:
+                threshold = float(
+                    (card.get_card_value() - discard_card.get_card_value()) /
+                    card.get_card_value())
+                logging.info(
+                    f"1:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
+                )
+            elif card.get_card_value() <= 0:
+                threshold = 0
+                logging.info(
+                    f"2:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
+                )
+            else:
+                threshold = 1
+                logging.info(
+                    f"Else:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
+                )
+            return threshold
+
+        self.log_pile_state()
+
+        for card in self.computer_pile_memory:
+            if upper_range >= discard_calculation() >= lower_range:
+                logging.info(
+                    f"Discard card: {discard_calculation()} is between {upper_range} and {lower_range} - swapping."
+                )
+                swap_index = self.computer_pile_memory.index(card)
+                logging.info(
+                    f"Index of to be swapped card is {self.computer_pile_memory.index(card)}. This card is a {self.computer_pile[swap_index]}."
+                )
+                temporary_hold_for_swapped_card = self.computer_pile[swap_index]
+                self.computer_pile_memory[
+                    swap_index] = self.discard_pile.get_top_card()
+                self.computer_pile[swap_index] = self.discard_pile.get_top_card(
+                )
+                self.discard_pile.appendleft(temporary_hold_for_swapped_card)
+                logging.info(
+                    f"Swapped {temporary_hold_for_swapped_card} at {swap_index} with a {self.computer_pile[swap_index]}"
+                )
+                logging.info(
+                    f"Top card of discard pile is {self.discard_pile[0]}")
+                break
+        self.log_pile_state()
+
+    def log_pile_state(self):
+        logging.info(f"Top of deal pile is {str(self.deal_pile[0])}")
+        logging.info(str(self.computer_pile))
+        logging.info(str(self.computer_pile_memory))
+        logging.info(str(self.discard_pile))
+        logging.info(str(self.human_pile))
 
     def end_turn(self) -> bool:
         """Ends turn, increments turn count, and prints terminal indicator."""
@@ -310,6 +389,9 @@ def swap(source_stack: Stack, dest_stack: Stack, source_index: int,
     del dest_stack[dest_index]
     dest_stack.insert(dest_index, swap_card1)
     source_stack.insert(source_index, swap_card2)
+    logging.info(
+        f"Swapped {swap_card1} in {source_stack} for {swap_card2} in {dest_index}"
+    )
     return swap_card1.name, swap_card2.name
 
 

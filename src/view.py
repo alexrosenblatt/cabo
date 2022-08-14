@@ -197,7 +197,6 @@ def present_hand_table(stack_obj, open_hand: bool = False) -> None:
             index += 1
     response = tabulate_hand(stack_obj, hand)
     print(response)
-    
 
 
 def tabulate_hand(stack_obj, hand: list[list[str]]) -> str:  # TODO
