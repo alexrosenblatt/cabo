@@ -4,7 +4,7 @@ import random
 from collections import deque
 from time import sleep
 from tokenize import String
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 from xmlrpc.client import Boolean
 
 from tabulate import tabulate
@@ -20,13 +20,21 @@ logging.basicConfig(filename='log.log',
                     format='%(asctime)s %(lineno)d %(message)s')
 
 
+class CardMemory(TypedDict):
+    stack_name: str
+    index: int
+    card_name: str
+    value: int
+    power: int
+
+
 class Stack(deque):  # TODO need to refactor this to not inherit from deque?
     """Creates a hand and maintains functions related to a stack.
     Takes in a name string and a list of cards."""
 
-    def __init__(self, name: str, members: List[Card]):
-        self.members = members
+    def __init__(self, name: str):
         self.name = name
+        self.memory: List[CardMemory] = []
 
     def __str__(self):
         hand_list = []
@@ -35,6 +43,17 @@ class Stack(deque):  # TODO need to refactor this to not inherit from deque?
             card_name = cards.get_card_name()
             hand_list.append(card_name)
         return f"{self.name} contains {hand_list})"
+
+    def insert_and_memorize(self, index, object):
+        self.insert(index, object)
+        self.memory.insert(
+            0, {
+                'stack_name': self.name,
+                'index': index,
+                'card_name': object.name,
+                'value': object.value,
+                'power': object.power,
+            })
 
     def get_pile_value(self) -> int:
         """Returns sum of the value of all cards in current stack."""
@@ -95,7 +114,6 @@ class Game:
                  computer_pile,
                  discard_pile,
                  deal_pile,
-                 computer_pile_memory,
                  turn_count: int = 1,
                  open_hand: bool = False,
                  cabo_called: bool = False,
@@ -107,16 +125,14 @@ class Game:
         self.cabo_called: bool = cabo_called
         self.turn_count: int = turn_count
         self.deal_pile: Stack = deal_pile
-        self.computer_pile_memory: Stack = computer_pile_memory
         self.name: str = ""
         self.computer_diff: str = computer_difficulty
-        self.computer_opponent_memory = ["computer_opponent_memory"]
 
     def initialize_game(
             self
     ) -> None:  # TODO Enable use of player name and write instructions
         """Initial setup of game to gather human player information and show instructions."""
-        Player1 = Player(present_intro(), 'Computer')
+        Player1 = Player(present_intro(), 'Computer', 1)
 
     def call_cabo_action(self) -> bool:
         """Sets cabo state evaluated in main game while loop"""
@@ -251,12 +267,12 @@ class Game:
         def discard_calculation():
             if discard_card.get_card_value() >= 0:
                 threshold = float(
-                    (card.get_card_value() - discard_card.get_card_value()) /
-                    card.get_card_value())
+                    (card.get('value') - discard_card.get_card_value()) /
+                    card.get('value'))
                 logging.info(
                     f"1:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
                 )
-            elif card.get_card_value() <= 0:
+            elif card.get('value') <= 0:
                 threshold = 0
                 logging.info(
                     f"2:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
@@ -270,24 +286,17 @@ class Game:
 
         self.log_pile_state()
 
-        for card in self.computer_pile_memory:
+        for card in self.computer_pile.memory:
             if upper_range >= discard_calculation() >= lower_range:
                 logging.info(
                     f"Discard card: {discard_calculation()} is between {upper_range} and {lower_range} - swapping."
                 )
-                swap_index = self.computer_pile_memory.index(card)
+                swap_index = self.computer_pile.memory.index(card)
                 logging.info(
-                    f"Index of to be swapped card is {self.computer_pile_memory.index(card)}. This card is a {self.computer_pile[swap_index]}."
+                    f"Index of to be swapped card is {self.computer_pile.memory.index(card)}. This card is a {self.computer_pile[swap_index]}."
                 )
-                temporary_hold_for_swapped_card = self.computer_pile[swap_index]
-                self.computer_pile_memory[
-                    swap_index] = self.discard_pile.get_top_card()
-                self.computer_pile[swap_index] = self.discard_pile.get_top_card(
-                )
-                self.discard_pile.appendleft(temporary_hold_for_swapped_card)
-                logging.info(
-                    f"Swapped {temporary_hold_for_swapped_card} at {swap_index} with a {self.computer_pile[swap_index]}"
-                )
+
+                swap(self.discard_pile, self.computer_pile, 0, swap_index)
                 logging.info(
                     f"Top card of discard pile is {self.discard_pile[0]}")
                 break
@@ -296,7 +305,7 @@ class Game:
     def log_pile_state(self):
         logging.info(f"Top of deal pile is {str(self.deal_pile[0])}")
         logging.info(str(self.computer_pile))
-        logging.info(str(self.computer_pile_memory))
+        logging.info(str(self.computer_pile.memory))
         logging.info(str(self.discard_pile))
         logging.info(str(self.human_pile))
 
@@ -350,7 +359,7 @@ def transfer_action(source_stack: Stack,
         - dest_index  = destination index to insert"""
     transfer_card: Card = source_stack[source_index]
     del source_stack[source_index]
-    dest_stack.insert(dest_index, transfer_card)
+    dest_stack.insert_and_memorize(dest_index, transfer_card)
     return transfer_card.name, dest_stack.name
 
 
@@ -387,11 +396,12 @@ def swap(source_stack: Stack, dest_stack: Stack, source_index: int,
     swap_card2: Card = dest_stack[dest_index]
     del source_stack[source_index]
     del dest_stack[dest_index]
-    dest_stack.insert(dest_index, swap_card1)
-    source_stack.insert(source_index, swap_card2)
+    dest_stack.insert_and_memorize(dest_index, swap_card1)
+    source_stack.insert_and_memorize(source_index, swap_card2)
     logging.info(
         f"Swapped {swap_card1} in {source_stack} for {swap_card2} in {dest_index}"
     )
+    print(dest_stack.memory)
     return swap_card1.name, swap_card2.name
 
 
