@@ -23,18 +23,49 @@ logging.basicConfig(filename='log.log',
 class CardMemory(TypedDict):
     stack_name: str
     index: int
-    card_name: str
-    value: int
-    power: int
+    card: Card
 
 
-class Stack(deque):  # TODO need to refactor this to not inherit from deque?
-    """Creates a hand and maintains functions related to a stack.
+class Player:
+
+    def __init__(self, name: str, type: str, difficulty: int | None = None):
+        self.name = name
+        self.type = type
+        self.pile: Pile = Pile(self)
+        self.difficulty = difficulty
+        self.memory: list[CardMemory] = []
+
+    def insert_in_hand_and_memorize(self, index, object: Card):
+        self.pile.insert(index, object)
+        self.memory.insert(0, {
+            'stack_name': self.name,
+            'index': index,
+            'card': object,
+        })
+
+    def _start_game_memorize(self):
+        for card in self.pile:
+            index = self.pile.index(card)
+            object = card
+            self.memory.insert(0, {
+                'stack_name': self.name,
+                'index': index,
+                'card': object,
+            })
+            if self.pile.index(card) >= 1:
+                break
+
+
+class Pile(deque):
+    """Creates a hand and maintains functions related to a pile of cards.
     Takes in a name string and a list of cards."""
 
-    def __init__(self, name: str):
-        self.name = name
-        self.memory: List[CardMemory] = []
+    def __init__(self, owner=None, name: str = ''):
+        self.owner = owner
+        if self.owner:
+            self.name = self.owner.name
+        else:
+            self.name = name
 
     def __str__(self):
         hand_list = []
@@ -44,18 +75,7 @@ class Stack(deque):  # TODO need to refactor this to not inherit from deque?
             hand_list.append(card_name)
         return f"{self.name} contains {hand_list})"
 
-    def insert_and_memorize(self, index, object):
-        self.insert(index, object)
-        self.memory.insert(
-            0, {
-                'stack_name': self.name,
-                'index': index,
-                'card_name': object.name,
-                'value': object.value,
-                'power': object.power,
-            })
-
-    def get_pile_value(self) -> int:
+    def get_sum_value(self) -> int:
         """Returns sum of the value of all cards in current stack."""
         return sum(c.value for c in self)
 
@@ -64,7 +84,7 @@ class Stack(deque):  # TODO need to refactor this to not inherit from deque?
         return self[0]
 
 
-class Card:  # TODO add logic to show human hand vs. computer hand
+class Card:
     """This creates a cabo card."""
 
     def __init__(self, name: str, value: int = 0, power: int = 0):
@@ -80,10 +100,17 @@ class Card:  # TODO add logic to show human hand vs. computer hand
         return self.name
 
     def get_card_value(self) -> int:
-        """Returns name attribute of Card"""
+        """Returns value attribute of Card"""
         return self.value
 
-    def associate_value(self) -> bool:
+    def get_card_powers(self) -> str | None:
+        """Returns value associated with the power defined in constants of the Card"""
+        for key, value in c.POWERS.items():
+            if self.power == value:
+                power_value = key
+                return power_value
+
+    def _associate_value(self) -> bool:
         """This function is used when building deck
         to update card values from constant."""
         for key, value in c.CARD_VALUES.items():
@@ -91,7 +118,7 @@ class Card:  # TODO add logic to show human hand vs. computer hand
                 self.value = value
         return True
 
-    def associate_powers(self) -> bool:
+    def _associate_powers(self) -> bool:
         """This function is used when building deck to update power values from constant."""
         for key, value in c.CARD_POWERS_tester.items():
             if self.name == key:
@@ -99,83 +126,116 @@ class Card:  # TODO add logic to show human hand vs. computer hand
                 return True
         return False
 
-    def return_card_powers(self) -> str | None:
-        """Returns value associated with the power defined in constants of the Card"""
-        for key, value in c.POWERS.items():
-            if self.power == value:
-                power_value = key
-                return power_value
-
 
 class Game:
 
     def __init__(self,
-                 human_pile,
-                 computer_pile,
-                 discard_pile,
-                 deal_pile,
                  turn_count: int = 1,
                  open_hand: bool = False,
                  cabo_called: bool = False,
                  computer_difficulty: str = 'Easy'):
-        self.open_hand: bool = open_hand  # set this to see every card in each hand each round
-        self.human_pile: Stack = human_pile
-        self.computer_pile: Stack = computer_pile
-        self.discard_pile: Stack = discard_pile
-        self.cabo_called: bool = cabo_called
+
+        self.player_list: list[Player] = []
+        self.discard_pile = Pile(name='discard_pile')
+        self.deal_pile = Pile(name='deal_pile')
+
+        self.computer_difficulty: str = computer_difficulty
+
         self.turn_count: int = turn_count
-        self.deal_pile: Stack = deal_pile
-        self.name: str = ""
-        self.computer_diff: str = computer_difficulty
+        self.cabo_called: bool = cabo_called
+        self.is_open_hand: bool = open_hand  # set this to see every card in each hand each round
 
-    def initialize_game(
-            self
-    ) -> None:  # TODO Enable use of player name and write instructions
+    def _create_players(self, human_count, computer_count):
+        count = 0
+        for _ in range(human_count):
+            self.player_list.append(Player(f"human_{count}", 'human'))
+            count += 1
+        count = 0
+        for _ in range(computer_count):
+            self.player_list.append(Player(f"computer_{count}", 'computer'))
+            count += 1
+
+    def initialize_game(self) -> None:
         """Initial setup of game to gather human player information and show instructions."""
-        Player1 = Player(present_intro(), 'Computer', 1)
+        (human_player_count,
+         computer_player_count) = present_game_start_prompt()
+        self._create_players(human_player_count, computer_player_count)
+        deal_pile = self._build_deck()
+        random.shuffle(deal_pile)
+        for cards in deal_pile:
+            self.deal_pile.append(cards)
+        transfer(self.deal_pile, self.discard_pile, 0, 0)
+        for player in self.player_list:
+            self._build_hand(self.deal_pile, player.pile)
+            player._start_game_memorize()
 
-    def call_cabo_action(self) -> bool:
+    def _build_deck(self) -> list[Card]:
+        """Initial construction of the deck by creating cards defined in CARD_COUNTS_* and then iterating over them
+        to update the value and power as defined in constants"""
+        new_deck: list[Card] = []
+        new_deck.extend(
+            [Card(name) for name in c.CARD_COUNTS_4 for i in range(1, 5)])
+        new_deck.extend(
+            [Card(name) for name in c.CARD_COUNTS_2 for i in range(1, 3)])
+        for card in new_deck:
+            Card._associate_value(card)
+        for card in new_deck:
+            Card._associate_powers(card)
+        return new_deck
+
+    def _build_hand(self, source_stack: Pile, dest_stack: Pile) -> bool:
+        """Creates initial hands for players with four cards"""
+        n: int = 0
+        while n < 4:
+            transfer(source_stack, dest_stack, 0, n)
+            n += 1
+        return True
+
+    def set_cabo_state(self) -> bool:
         """Sets cabo state evaluated in main game while loop"""
         self.cabo_called = True
         return True
 
     def discard_drawn_card(self) -> bool:
         """Transfers card from deal stack to discard stack"""
-        make_transfer(self.deal_pile, self.discard_pile, 0, 0, True)
+        transfer(self.deal_pile, self.discard_pile, 0, 0, True)
         return True
 
     def swap_drawn_card(
         self,
         pile_index: int,
         destination_pile,
-    ) -> tuple[Stack, Stack]:
+    ) -> tuple[Pile, Pile]:
         """Enables a player to swap the "drawn" card with one in their pile
         and send the one in their pile to the discard pile.
 
         players_stack == players pile"""
-        make_transfer(destination_pile, self.discard_pile, pile_index, 0)
-        make_transfer(self.deal_pile, destination_pile, 0, pile_index)
+        transfer(destination_pile, self.discard_pile, pile_index, 0)
+        transfer(self.deal_pile, destination_pile, 0, pile_index)
         return destination_pile[0], self.discard_pile[0]
 
     def start_round(self) -> bool:
         """Displays initial information of round to human player."""
         present_round_spacer(self.turn_count)
-        if self.open_hand == True:
-            present_hand_table(self.computer_pile, True)
-            present_hand_table(self.human_pile, True)
+        if self.is_open_hand == True:
+            for player in self.player_list:
+                present_hand_table(player.pile, True)
             sleep(2)  #TODO remove
             return True
-        elif self.turn_count == 1 and self.open_hand == False:
-            show_placeholder_hand(self.computer_pile)
-            present_hand_table(self.human_pile)
+        elif self.turn_count == 1 and self.is_open_hand == False:
+            for player in self.player_list:
+                if player.type == 'computer':
+                    show_placeholder_hand(player.pile)
+                else:
+                    present_hand_table(player.pile)
             sleep(2)  #TODO remove
             return True
         else:
-            show_placeholder_hand(self.computer_pile)
-            show_placeholder_hand(self.human_pile)
-            return True
+            for player in self.player_list:
+                show_placeholder_hand(player.pile)
+        return True
 
-    def start_human_turn(self):
+    def start_human_turn(self, player: Player):
         """Gather human turn input and triggers game play mechanics."""
         self.start_round()
         discard_card = self.discard_pile.get_top_card()
@@ -185,7 +245,7 @@ class Game:
                 try:
                     swap_card_destination_index: int = present_swap_card_prompt(
                     ) - 1
-                    swap_results = swap(self.discard_pile, self.human_pile, 0,
+                    swap_results = swap(self.discard_pile, player.pile, 0,
                                         swap_card_destination_index)
                     present_swap_results(swap_results,
                                          swap_card_destination_index)
@@ -204,7 +264,7 @@ class Game:
                     if turn_action_choice == 5:  # end game
                         exit()
                     elif turn_action_choice == 4:  # call cabo
-                        if self.call_cabo_action() == True:
+                        if self.set_cabo_state() == True:
                             return present_cabo()
                     elif turn_action_choice == 3:
                         while True:
@@ -212,8 +272,7 @@ class Game:
                             ) - 1
                             try:
                                 swap_discard_card_response = self.swap_drawn_card(
-                                    swap_card_destination_index,
-                                    self.human_pile)
+                                    swap_card_destination_index, player.pile)
                                 present_swap_draw_results(
                                     swap_discard_card_response,
                                     swap_card_destination_index)
@@ -232,7 +291,7 @@ class Game:
                         if drawn_card_power == 0:
                             raise ValueError
                         else:
-                            use_power(drawn_card_power, self.human_pile,
+                            use_power(drawn_card_power, player.pile,
                                       self.computer_pile)
                             return True
                     elif turn_action_choice > 6:
@@ -248,7 +307,7 @@ class Game:
                     break
             return True
 
-    def computer_turn(self):  # TODO make this work lol
+    def start_computer_turn(self):  # TODO make this work lol
         self.start_round()
         self.computer_turn_discard_card_check()
 
@@ -283,8 +342,6 @@ class Game:
                     f"Else:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
                 )
             return threshold
-
-        self.log_pile_state()
 
         for card in self.computer_pile.memory:
             if upper_range >= discard_calculation() >= lower_range:
@@ -321,55 +378,11 @@ class Game:
         return True
 
 
-def build_deck() -> list[Card]:
-    """Initial construction of the deck by creating cards defined in CARD_COUNTS_* and then iterating over them
-    to update the value and power as defined in constants"""
-    new_deck: list[Card] = []
-    new_deck.extend(
-        [Card(name) for name in c.CARD_COUNTS_4 for i in range(1, 5)])
-    new_deck.extend(
-        [Card(name) for name in c.CARD_COUNTS_2 for i in range(1, 3)])
-    for card in new_deck:
-        Card.associate_value(card)
-    for card in new_deck:
-        Card.associate_powers(card)
-    return new_deck
-
-
-def build_hand(source_stack: Stack, dest_stack: Stack) -> bool:
-    """Creates initial hands for players with four cards"""
-    n: int = 0
-    while n < 4:
-        make_transfer(source_stack, dest_stack, 0, n)
-        n += 1
-    return True
-
-
-def transfer_action(source_stack: Stack,
-                    dest_stack: Stack,
-                    source_index: int = 0,
-                    dest_index: int = 0,
-                    describe: bool = False) -> tuple[str, str]:
-    """***use Transfer()***
-    Copies a card in one stack to destination stack with:
-        - source stack as source_stack
-        - destination stack as dest_stack
-        - source_index  = source index to copy and delete card from.
-        Default is "top" of deck or index 0
-        - dest_index  = destination index to insert"""
-    transfer_card: Card = source_stack[source_index]
-    del source_stack[source_index]
-    dest_stack.insert_and_memorize(dest_index, transfer_card)
-    return transfer_card.name, dest_stack.name
-
-
-def make_transfer(
-    source_stack: Stack,
-    dest_stack: Stack,
-    source_index: int = 0,
-    dest_index: int = 0,
-    describe: bool = False,
-) -> bool:
+def transfer(source_pile: Pile,
+             destination_pile: Pile,
+             source_index: int = 0,
+             dest_index: int = 0,
+             describe: bool = False) -> bool:
     """Copies a card in one stack to destination stack with:
     - source stack as source_stack
     - destination stack as dest_stack
@@ -378,48 +391,62 @@ def make_transfer(
     - dest_index  = destination index to insert
 
     Set 'describe' to True to print a record of the transfer to the terminal."""
-    transfer_results = transfer_action(
-        source_stack,
-        dest_stack,
-        source_index,
-        dest_index,
-    )
+    transfer_card = source_pile[source_index]
+    del source_pile[source_index]
+    destination_pile.insert(dest_index, transfer_card)
     if describe == True:
-        present_transfer(transfer_results[0], transfer_results[1])
+        present_transfer(transfer_card.name, destination_pile.name)
     return True
 
 
-def swap(source_stack: Stack, dest_stack: Stack, source_index: int,
+def swap(source_pile: Pile, destination_pile: Pile, source_index: int,
          dest_index: int) -> tuple[str, str]:
-    """Switches Card from source_stack in source_index with Card in dest_stack to dest_index"""
-    swap_card1: Card = source_stack[source_index]
-    swap_card2: Card = dest_stack[dest_index]
-    del source_stack[source_index]
-    del dest_stack[dest_index]
-    dest_stack.insert_and_memorize(dest_index, swap_card1)
-    source_stack.insert_and_memorize(source_index, swap_card2)
-    logging.info(
-        f"Swapped {swap_card1} in {source_stack} for {swap_card2} in {dest_index}"
-    )
-    print(dest_stack.memory)
+    """Switches Card from source_stack at source_index with Card in dest_stack at dest_index"""
+    swap_card1: Card = source_pile[source_index]
+    swap_card2: Card = destination_pile[dest_index]
+    del source_pile[source_index]
+    del destination_pile[dest_index]
+    insert_and_memorize(destination_pile, dest_index, swap_card1,
+                        destination_pile.owner)
+    insert_and_memorize(source_pile, source_index, swap_card1,
+                        destination_pile.owner)
+    log_swap_results(source_pile, dest_index, swap_card1, swap_card2)
     return swap_card1.name, swap_card2.name
 
 
-def shuffle(stack_name: Stack) -> bool:
+def insert_and_memorize(pile,
+                        index,
+                        object: Card,
+                        player_taking_action,
+                        is_public=0):
+    pile.insert(index, object)
+    player_taking_action.memory.insert(0, {
+        'stack_name': pile.name,
+        'index': index,
+        'card': object,
+    })
+    if is_public == 1:
+        present_other_player_card_discard(pile, index, object,
+                                          player_taking_action)
+    else:
+        pass
+
+
+def shuffle(pile_name: Pile) -> bool:
     """Shuffles cards of a Stack using random function."""
     rng = random.Random()
-    rng.shuffle(stack_name)
-    return True
+    rng.shuffle(pile_name)
+    return pile_name
 
 
-def get_drawn_card(stack_name: Stack) -> Card:
+def get_drawn_card(pile_name: Pile) -> Card:
     """Returns the draw card from the deal stack. Use this on the deal_stack due to bug where deal_stack can't be a Stack."""
-    return stack_name[0]
+    return pile_name[0]
 
 
 def power_controller(drawn_card_power: int,
-                     human_stack: Stack,
-                     computer_stack: Stack,
+                     source_pile: Pile,
+                     destination_pile: Pile,
                      destination_position: int | None = None,
                      source_position: int | None = None) -> tuple[Any, Any]:
     """Defines and triggers card power actions."""
@@ -428,21 +455,21 @@ def power_controller(drawn_card_power: int,
     if destination_position != None:
         destination_index = int(destination_position) - 1
     if drawn_card_power == 1:
-        card_name = Card.get_card_name(human_stack[destination_index])
+        card_name = Card.get_card_name(source_pile[destination_index])
         return card_name, destination_position
     elif drawn_card_power == 2:
-        card_name = Card.get_card_name(computer_stack[source_index])
+        card_name = Card.get_card_name(destination_pile[source_index])
         return card_name, source_position
     elif drawn_card_power == 3:
-        swap(human_stack, computer_stack, source_index, destination_index)
+        swap(source_pile, destination_pile, source_index, destination_index)
     elif drawn_card_power == 4:
-        swap_results = swap(human_stack, computer_stack, source_index,
+        swap_results = swap(source_pile, destination_pile, source_index,
                             destination_index)
         return swap_results
 
 
-def use_power(drawn_card_power: int, source_pile: Stack,
-              destination_pile: Stack) -> bool:
+def use_power(drawn_card_power: int, source_pile: Pile,
+              destination_pile: Pile) -> bool:
     """Collects necessary input from human to trigger correct card powers"""
     if (drawn_card_power == 1
        ):  # TODO rewrite to show revealed card with table rather than sentence
@@ -479,10 +506,7 @@ def use_power(drawn_card_power: int, source_pile: Stack,
         return False
 
 
-class Player:
-
-    def __init__(self, name: str, type: str, difficulty: int):
-        self.name = name
-        self.type = type
-        self.memory = {}
-        self.difficulty = difficulty
+def log_swap_results(source_pile, dest_index, swap_card1, swap_card2):
+    logging.info(
+        f"Swapped {swap_card1} in {source_pile} for {swap_card2} in {dest_index}"
+    )

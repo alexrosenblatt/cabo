@@ -17,6 +17,17 @@ def present_round_spacer(turn_count) -> None:
     sleep(1)
 
 
+def present_other_player_card_discard(source_stack, source_index, swap_card1,
+                                      dest_stack):
+    pass
+
+
+def present_game_start_prompt() -> Tuple[int, int]:
+    human_player_count = input('How many human players?')
+    computer_player_count = input('How many computer players?')
+    return int(human_player_count), int(computer_player_count)
+
+
 def present_swap_discard_prompt(discard_card) -> int:
     while True:
         try:
@@ -136,6 +147,14 @@ def present_open_swap_prompt():
             "Which of your opponents cards would you like to swap with? Please enter position number."
         ))
     return source_index, dest_index
+
+
+def present_player_choice(player_list):
+    count = 0
+    for player in player_list:
+        print(f"\n \t {count}: {player.name}")
+    response = input("Which player would you like to target?")
+    return response
 
 
 def present_blind_swap_prompt():
