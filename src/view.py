@@ -51,7 +51,7 @@ def present_swap_card_prompt() -> int:
 
 def present_swap_results(sr, hand_index) -> None:
     print(
-        f"You swapped discarded card {sr[1]} for a {sr[0]} at position {hand_index} in your hand."
+        f"You swapped {sr[1]} with discarded card {sr[0]} at position {hand_index} in your hand."
     )
     sleep(2)
 
@@ -108,9 +108,9 @@ def present_intro():
     return name
 
 
-def present_card_powers_string(card_obj) -> None:
+def present_card_powers_string(card) -> None:
     '''Prints a string to terminal of the power associated with the Card'''
-    print(f"This top card has the ability to:{card_obj.return_card_powers()}"
+    print(f"This top card has the ability to:{card.get_card_powers()}"
          )  # TODO fix this to show strings)
 
 
@@ -137,16 +137,17 @@ def present_blind_swap(source_index, dest_index):
     sleep(4)
 
 
-def present_open_swap_prompt():
+def present_open_swap_prompt(player_list):
     source_index = int(
         input(
             "Which of your cards would you like to swap? Please enter position number."
         ))
+    player_choice = present_player_choice(player_list)
     dest_index = int(
         input(
             "Which of your opponents cards would you like to swap with? Please enter position number."
         ))
-    return source_index, dest_index
+    return source_index, dest_index, player_choice
 
 
 def present_player_choice(player_list):

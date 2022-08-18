@@ -13,6 +13,8 @@ import constants as c
 from view import *
 import logging
 
+from view import present_peek_card_prompt, present_cabo
+
 logging.basicConfig(filename='log.log',
                     filemode='w',
                     encoding='utf-8',
@@ -28,7 +30,7 @@ class CardMemory(TypedDict):
 
 class Player:
 
-    def __init__(self, name: str, type: str, difficulty: int | None = None):
+    def __init__(self, name: str, type: int, difficulty: int | None = None):
         self.name = name
         self.type = type
         self.pile: Pile = Pile(self)
@@ -148,11 +150,11 @@ class Game:
     def _create_players(self, human_count, computer_count):
         count = 0
         for _ in range(human_count):
-            self.player_list.append(Player(f"human_{count}", 'human'))
+            self.player_list.append(Player(f"human_{count}", 0))
             count += 1
         count = 0
         for _ in range(computer_count):
-            self.player_list.append(Player(f"computer_{count}", 'computer'))
+            self.player_list.append(Player(f"computer_{count}", 1))
             count += 1
 
     def initialize_game(self) -> None:
@@ -201,19 +203,6 @@ class Game:
         transfer(self.deal_pile, self.discard_pile, 0, 0, True)
         return True
 
-    def swap_drawn_card(
-        self,
-        pile_index: int,
-        destination_pile,
-    ) -> tuple[Pile, Pile]:
-        """Enables a player to swap the "drawn" card with one in their pile
-        and send the one in their pile to the discard pile.
-
-        players_stack == players pile"""
-        transfer(destination_pile, self.discard_pile, pile_index, 0)
-        transfer(self.deal_pile, destination_pile, 0, pile_index)
-        return destination_pile[0], self.discard_pile[0]
-
     def start_round(self) -> bool:
         """Displays initial information of round to human player."""
         present_round_spacer(self.turn_count)
@@ -235,9 +224,56 @@ class Game:
                 show_placeholder_hand(player.pile)
         return True
 
+    def start_turn(self, player: Player):
+        self.start_round()
+        current_players_pile = player.pile
+        current_player_type = player.type
+        drawn_discard_card = self.discard_pile.get_top_card()
+        discard_card_swapped = self.evaluate_and_action_discard_card(
+            current_player_type, current_players_pile, drawn_discard_card)
+        if not discard_card_swapped:
+            turn_action_choice = self.evaluate_drawn_card(
+                player, current_player_type)
+            try:
+                if turn_action_choice == 5:  # end game
+                    exit()
+                elif turn_action_choice == 4:  # call cabo
+                    if self.set_cabo_state() == True:
+                        return present_cabo()
+                elif turn_action_choice == 3:
+                    self.swap_drawn_card(current_player_type,
+                                         current_players_pile)
+                    return True
+                elif turn_action_choice == 2:  # discard
+                    self.discard_drawn_card()
+                    return True
+                elif turn_action_choice == 1:
+                    self.use_power_on_card(player, current_player_type,
+                                           current_players_pile)
+                    return True
+                else:
+                    raise ValueError  # to make sure number is in range
+            except ValueError:
+                if turn_action_choice == 2:
+                    present_card_index_error()
+                if turn_action_choice == 1:
+                    present_card_power_error()
+                else:
+                    present_card_index_error()
+
+    def use_power_on_card(self, current_player_type, current_players_pile):
+        drawn_card = get_drawn_card(self.deal_pile)
+        drawn_card_power = drawn_card.power
+        if drawn_card_power == 0:
+            raise ValueError
+        else:
+            use_power(drawn_card_power, current_players_pile,
+                      current_player_type)
+
     def start_human_turn(self, player: Player):
         """Gather human turn input and triggers game play mechanics."""
         self.start_round()
+        current_players_pile = player.pile
         discard_card = self.discard_pile.get_top_card()
         swap_discard_card_response = present_swap_discard_prompt(discard_card)
         if swap_discard_card_response == 1:
@@ -245,8 +281,8 @@ class Game:
                 try:
                     swap_card_destination_index: int = present_swap_card_prompt(
                     ) - 1
-                    swap_results = swap(self.discard_pile, player.pile, 0,
-                                        swap_card_destination_index)
+                    swap_results = swap(self.discard_pile, current_players_pile,
+                                        0, swap_card_destination_index)
                     present_swap_results(swap_results,
                                          swap_card_destination_index)
                 except (IndexError, ValueError):
@@ -292,7 +328,7 @@ class Game:
                             raise ValueError
                         else:
                             use_power(drawn_card_power, player.pile,
-                                      self.computer_pile)
+                                      self.player_list)
                             return True
                     elif turn_action_choice > 6:
                         raise ValueError  # to make sure number is in range
@@ -376,6 +412,75 @@ class Game:
         """increments turn count indicator"""
         self.turn_count += 1
         return True
+
+    def evaluate_and_action_discard_card(self, current_player_type,
+                                         current_players_pile,
+                                         drawn_discard_card):
+        if current_player_type == 0:
+            response = present_swap_discard_prompt(drawn_discard_card)
+        else:
+            response = self.get_computer_discard_evaluation()
+        if response == 1:
+            while True:
+                try:
+                    if current_player_type == 0:
+                        swap_card_destination_index = present_swap_card_prompt(
+                        ) - 1
+                    elif current_player_type == 1:
+                        swap_card_destination_index = self.get_computer_swap_card_index(
+                        )
+                    else:
+                        break
+                except (IndexError, ValueError):
+                    present_card_index_error()
+                finally:
+                    swap_results = swap(self.discard_pile, current_players_pile,
+                                        0, swap_card_destination_index)
+                    present_swap_results(swap_results,
+                                         swap_card_destination_index)
+                return True
+        elif response == 0:
+            return False
+
+    def swap_drawn_card(self, current_player_type, current_players_pile):
+        while True:
+            try:
+                if current_player_type == 0:
+                    swap_card_destination_index = present_swap_card_prompt() - 1
+                else:
+                    swap_card_destination_index = self.get_computer_drawn_card_index(
+                    )
+                swap_discard_card_response = swap(self.deal_pile,
+                                                  current_players_pile, 0,
+                                                  swap_card_destination_index)
+                present_swap_draw_results(swap_discard_card_response,
+                                          swap_card_destination_index)
+            except IndexError:
+                present_card_index_error()
+            else:
+                break
+
+    def evaluate_drawn_card(self, Player, current_players_type):
+        drawn_card = self.deal_pile.get_top_card()
+        if current_players_type == 0:
+            present_draw_card_preview(drawn_card)
+            present_card_powers_string(drawn_card)
+            turn_action_choice = present_action_prompt()
+        else:
+            turn_action_choice = self.get_computer_action_choice(drawn_card)
+        return turn_action_choice
+
+    def get_computer_discard_evaluation(self):
+        pass
+
+    def get_computer_swap_card_index(self):
+        return 1
+
+    def get_computer_action_choice(self, drawn_card):
+        return 1
+
+    def get_computer_drawn_card_index(self):
+        return 1
 
 
 def transfer(source_pile: Pile,
@@ -471,8 +576,7 @@ def power_controller(drawn_card_power: int,
 def use_power(drawn_card_power: int, source_pile: Pile,
               destination_pile: Pile) -> bool:
     """Collects necessary input from human to trigger correct card powers"""
-    if (drawn_card_power == 1
-       ):  # TODO rewrite to show revealed card with table rather than sentence
+    if (drawn_card_power == 1):
         peek_index = present_peek_self_prompt()
         card_name, index_n = power_controller(drawn_card_power, source_pile,
                                               destination_pile, peek_index)
@@ -495,7 +599,7 @@ def use_power(drawn_card_power: int, source_pile: Pile,
         return True
 
     elif drawn_card_power == 4:
-        source_index, dest_index = present_open_swap_prompt()
+        source_index, dest_index, player = present_open_swap_prompt(player_list)
         r = power_controller(drawn_card_power, source_pile, destination_pile,
                              dest_index, source_index)
         c1 = r[0]

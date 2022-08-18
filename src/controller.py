@@ -41,9 +41,8 @@ print_currentstate()
 
 while not game.cabo_called:
     for player in game.player_list:
-        if player.type == 'human':
-            Game.start_human_turn(game, player)
-        elif player.type == 'computer':
-            Game.start_computer_turn(game, player)
+        if player.type == 0:
+            Game.start_turn(game, player)
+        elif player.type == 1:
+            Game.start_turn(game, player)
     Game.end_turn(game)
-    check_card_count()
