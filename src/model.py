@@ -248,7 +248,7 @@ class Game:
                     self.discard_drawn_card()
                     return True
                 elif turn_action_choice == 1:
-                    self.use_power_on_card(player, current_player_type,
+                    self.use_power_on_card(current_player_type,
                                            current_players_pile)
                     return True
                 else:
@@ -505,7 +505,7 @@ def transfer(source_pile: Pile,
 
 
 def swap(source_pile: Pile, destination_pile: Pile, source_index: int,
-         dest_index: int) -> tuple[str, str]:
+         dest_index: int) -> tuple[Card, Card]:
     """Switches Card from source_stack at source_index with Card in dest_stack at dest_index"""
     swap_card1: Card = source_pile[source_index]
     swap_card2: Card = destination_pile[dest_index]
@@ -516,7 +516,7 @@ def swap(source_pile: Pile, destination_pile: Pile, source_index: int,
     insert_and_memorize(source_pile, source_index, swap_card1,
                         destination_pile.owner)
     log_swap_results(source_pile, dest_index, swap_card1, swap_card2)
-    return swap_card1.name, swap_card2.name
+    return swap_card1, swap_card2
 
 
 def insert_and_memorize(pile,

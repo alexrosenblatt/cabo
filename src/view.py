@@ -32,7 +32,7 @@ def present_swap_discard_prompt(discard_card) -> int:
     while True:
         try:
             r = int(
-                input(f"\n The discard pile contains a {discard_card.name}. \
+                input(f"\n The discard pil≠ contains a {discard_card.name}. \
                         \n \n Would you like to swap this with a card in your own hand? \
                         \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "
                      ))
