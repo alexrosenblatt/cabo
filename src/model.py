@@ -13,8 +13,6 @@ import constants as c
 from view import *
 import logging
 
-from view import present_peek_card_prompt, present_cabo
-
 logging.basicConfig(filename='log.log',
                     filemode='w',
                     encoding='utf-8',
@@ -213,7 +211,7 @@ class Game:
             return True
         elif self.turn_count == 1 and self.is_open_hand == False:
             for player in self.player_list:
-                if player.type == 'computer':
+                if player.type == 1:
                     show_placeholder_hand(player.pile)
                 else:
                     present_hand_table(player.pile)
@@ -267,8 +265,15 @@ class Game:
         if drawn_card_power == 0:
             raise ValueError
         else:
-            use_power(drawn_card_power, current_players_pile,
-                      current_player_type)
+            if not drawn_card_power == 1:
+                target_players_pile = self.get_opponent_choice(
+                    current_player_type, current_players_pile)
+                self.use_power(drawn_card_power, current_players_pile,
+                               target_players_pile, current_player_type)
+            else:
+                target_players_pile = self.player_list[1].pile
+                self.use_power(drawn_card_power, current_players_pile,
+                               target_players_pile, current_player_type)
 
     def start_human_turn(self, player: Player):
         """Gather human turn input and triggers game play mechanics."""
@@ -470,6 +475,87 @@ class Game:
             turn_action_choice = self.get_computer_action_choice(drawn_card)
         return turn_action_choice
 
+    def power_controller(self,
+                         drawn_card_power: int,
+                         source_pile: Pile,
+                         destination_pile: Pile = Pile(),
+                         destination_index: int = 0,
+                         source_index: int = 0) -> tuple[Any, Any]:
+        """Defines and triggers card power actions."""
+        if drawn_card_power == 1:
+            card_name = Card.get_card_name(source_pile[destination_index])
+            return (card_name, destination_index)
+        elif drawn_card_power == 2:
+            card_name = Card.get_card_name(destination_pile[source_index])
+            return (card_name, source_index)
+        elif drawn_card_power == 3:
+            swap_results = swap(source_pile, destination_pile, source_index,
+                                destination_index)
+            return swap_results
+        elif drawn_card_power == 4:
+            swap_results = swap(source_pile, destination_pile, source_index,
+                                destination_index)
+            return swap_results
+
+    def use_power(self, drawn_card_power: int, current_player_pile: Pile,
+                  target_player_pile: Pile, current_player_type) -> bool:
+        """Collects necessary input from human to trigger correct card powers"""
+        if drawn_card_power == 1:
+            if current_player_type == 0:
+                peek_index = present_peek_self_prompt()
+            else:
+                peek_index = self.get_computer_self_peek_index()
+            card_name, index_n = self.power_controller(drawn_card_power,
+                                                       current_player_pile,
+                                                       source_index=peek_index)
+            present_reveal_card(card_name, index_n)
+            return True
+
+        elif drawn_card_power == 2:
+            if current_player_type == 0:
+                peek_index = present_peek_card_prompt()
+            else:
+                peek_index = self.get_computer_peek_index()
+            card_name, index_n = self.power_controller(drawn_card_power,
+                                                       current_player_pile,
+                                                       target_player_pile,
+                                                       peek_index)
+            present_peek_card(card_name, index_n)
+            return True
+
+        elif drawn_card_power == 3:
+            if current_player_type == 0:
+                source_index, destination_index = present_swap_prompt()
+            else:
+                source_index, destination_index = self.get_computer_swap_choice(
+                )
+            use_power_results = self.power_controller(drawn_card_power,
+                                                      current_player_pile,
+                                                      target_player_pile,
+                                                      destination_index,
+                                                      source_index)
+            if current_player_type == 0:
+                present_blind_swap(source_index, destination_index)
+            else:
+                return True
+            return True
+
+        elif drawn_card_power == 4:
+            if current_player_type == 0:
+                source_index, destination_index = present_swap_prompt()
+            else:
+                source_index, destination_index = self.get_computer_swap_choice(
+                )
+            card_1, card_2 = self.power_controller(drawn_card_power,
+                                                   current_player_pile,
+                                                   target_player_pile,
+                                                   destination_index,
+                                                   source_index)
+            present_open_swap(source_index, destination_index, card_1, card_2)
+            return True
+        else:
+            return False
+
     def get_computer_discard_evaluation(self):
         pass
 
@@ -481,6 +567,33 @@ class Game:
 
     def get_computer_drawn_card_index(self):
         return 1
+
+    def get_computer_opponent_choice_for_power(self, player_list) -> Pile:
+        return player_list[1].pile
+
+    def get_computer_self_peek_index(self) -> int:
+        return 1
+
+    def get_computer_peek_index(self) -> int:
+        return 1
+
+    def get_computer_swap_choice(self) -> tuple[int, int]:
+        source_index = 1
+        destination_index = 1
+        return source_index, destination_index
+
+    def get_opponent_choice(self, current_player_type, current_players_pile):
+        player_list = self.player_list
+        if len(player_list) > 2:
+            if current_player_type == 0:
+                choice_response = int(
+                    present_player_choice(player_list, current_players_pile))
+                return self.player_list[choice_response].pile
+
+            else:
+                return self.get_computer_opponent_choice_for_power(player_list)
+        else:
+            return player_list[1].pile
 
 
 def transfer(source_pile: Pile,
@@ -547,67 +660,6 @@ def shuffle(pile_name: Pile) -> bool:
 def get_drawn_card(pile_name: Pile) -> Card:
     """Returns the draw card from the deal stack. Use this on the deal_stack due to bug where deal_stack can't be a Stack."""
     return pile_name[0]
-
-
-def power_controller(drawn_card_power: int,
-                     source_pile: Pile,
-                     destination_pile: Pile,
-                     destination_position: int | None = None,
-                     source_position: int | None = None) -> tuple[Any, Any]:
-    """Defines and triggers card power actions."""
-    if source_position != None:
-        source_index = (source_position) - 1
-    if destination_position != None:
-        destination_index = int(destination_position) - 1
-    if drawn_card_power == 1:
-        card_name = Card.get_card_name(source_pile[destination_index])
-        return card_name, destination_position
-    elif drawn_card_power == 2:
-        card_name = Card.get_card_name(destination_pile[source_index])
-        return card_name, source_position
-    elif drawn_card_power == 3:
-        swap(source_pile, destination_pile, source_index, destination_index)
-    elif drawn_card_power == 4:
-        swap_results = swap(source_pile, destination_pile, source_index,
-                            destination_index)
-        return swap_results
-
-
-def use_power(drawn_card_power: int, source_pile: Pile,
-              destination_pile: Pile) -> bool:
-    """Collects necessary input from human to trigger correct card powers"""
-    if (drawn_card_power == 1):
-        peek_index = present_peek_self_prompt()
-        card_name, index_n = power_controller(drawn_card_power, source_pile,
-                                              destination_pile, peek_index)
-        present_reveal_card(card_name, index_n)
-        return True
-
-    elif drawn_card_power == 2:
-        peek_index = present_peek_card_prompt()
-        card_name, index_n = power_controller(drawn_card_power, source_pile,
-                                              destination_pile, None,
-                                              peek_index)
-        present_peek_card(card_name, index_n)
-        return True
-
-    elif drawn_card_power == 3:
-        source_index, dest_index = present_blind_swap_prompt()
-        r = power_controller(drawn_card_power, source_pile, destination_pile,
-                             dest_index, source_index)
-        present_blind_swap(source_index, dest_index)
-        return True
-
-    elif drawn_card_power == 4:
-        source_index, dest_index, player = present_open_swap_prompt(player_list)
-        r = power_controller(drawn_card_power, source_pile, destination_pile,
-                             dest_index, source_index)
-        c1 = r[0]
-        c2 = r[1]
-        present_open_swap(source_index, dest_index, c1, c2)
-        return True
-    else:
-        return False
 
 
 def log_swap_results(source_pile, dest_index, swap_card1, swap_card2):

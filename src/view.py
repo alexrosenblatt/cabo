@@ -22,7 +22,7 @@ def present_other_player_card_discard(source_stack, source_index, swap_card1,
     pass
 
 
-def present_game_start_prompt() -> Tuple[int, int]:
+def present_game_start_prompt() -> tuple[int, int]:
     human_player_count = input('How many human players?')
     computer_player_count = input('How many computer players?')
     return int(human_player_count), int(computer_player_count)
@@ -32,7 +32,7 @@ def present_swap_discard_prompt(discard_card) -> int:
     while True:
         try:
             r = int(
-                input(f"\n The discard pil≠ contains a {discard_card.name}. \
+                input(f"\n The discard pile contains a {discard_card.name}. \
                         \n \n Would you like to swap this with a card in your own hand? \
                         \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "
                      ))
@@ -137,28 +137,19 @@ def present_blind_swap(source_index, dest_index):
     sleep(4)
 
 
-def present_open_swap_prompt(player_list):
-    source_index = int(
-        input(
-            "Which of your cards would you like to swap? Please enter position number."
-        ))
-    player_choice = present_player_choice(player_list)
-    dest_index = int(
-        input(
-            "Which of your opponents cards would you like to swap with? Please enter position number."
-        ))
-    return source_index, dest_index, player_choice
-
-
-def present_player_choice(player_list):
+def present_player_choice(player_list, current_players_pile):
     count = 0
-    for player in player_list:
-        print(f"\n \t {count}: {player.name}")
-    response = input("Which player would you like to target?")
-    return response
+    for player in player_list():
+        if current_players_pile.owner != player.owner:
+            print(f"\n \t {count}: {player.name}")
+            count += 1
+        else:
+            pass
+    response = int(input("Which player would you like to target?"))
+    return response - 1
 
 
-def present_blind_swap_prompt():
+def present_swap_prompt():
     source_index = int(
         input(
             "Which of your cards would you like to swap? Please enter position number."
@@ -175,7 +166,7 @@ def present_peek_self_prompt():
         input(
             "Which of your own cards would you like to look at? Respond with position number: \n"
         ))
-    return peek_index
+    return peek_index - 1
 
 
 def present_peek_card_prompt():

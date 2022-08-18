@@ -19,7 +19,6 @@ from view import *
 #     human_pile,
 #     computer_pile,
 #     discard_pile,
-#     deal_pile,
 #     1,
 #     True,
 #     False,
