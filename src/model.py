@@ -4,13 +4,15 @@ import random
 from collections import deque
 from time import sleep
 
-from typing import Any, TypedDict
+from typing import Any, Tuple, TypedDict
 
 from tabulate import tabulate
 
 import constants as c
 from view import *
 import logging
+
+from attrs import define
 
 from view import present_other_player_card_discard
 
@@ -36,6 +38,8 @@ class Player:
         self.pile: Pile = Pile(self)
         self.difficulty = difficulty
         self.memory: list[CardMemory] = []
+        if type == 1:
+            self.ai = ComputerCalculation((1, 1))
 
     def insert_in_hand_and_memorize(self, index, object: Card, blind=True):
         self.pile.insert(index, object)
@@ -61,6 +65,12 @@ class Player:
                 })
             if self.pile.index(card) >= 1:
                 break
+
+    def get_current_hand_value(self):
+        current_hand_value = 0
+        for card in self.memory:
+            current_hand_value += int(card['value'])
+        return current_hand_value
 
 
 class Pile(deque):
@@ -235,7 +245,8 @@ class Game:
         current_player_type = player.type
         drawn_discard_card = self.discard_pile.get_top_card()
         discard_card_swapped = self.evaluate_and_action_discard_card(
-            current_player_type, current_players_pile, drawn_discard_card)
+            current_player_type, current_players_pile, drawn_discard_card,
+            player)
         if not discard_card_swapped:
             turn_action_choice = self.evaluate_drawn_card(
                 player, current_player_type)
@@ -247,14 +258,14 @@ class Game:
                         return present_cabo()
                 elif turn_action_choice == 3:
                     self.swap_drawn_card(current_player_type,
-                                         current_players_pile)
+                                         current_players_pile, player)
                     return True
                 elif turn_action_choice == 2:  # discard
                     self.discard_drawn_card()
                     return True
                 elif turn_action_choice == 1:
                     self.use_power_on_card(current_player_type,
-                                           current_players_pile)
+                                           current_players_pile, player)
                     return True
                 else:
                     raise ValueError  # to make sure number is in range
@@ -266,7 +277,8 @@ class Game:
                 else:
                     present_card_index_error()
 
-    def use_power_on_card(self, current_player_type, current_players_pile):
+    def use_power_on_card(self, current_player_type, current_players_pile,
+                          player):
         drawn_card = get_drawn_card(self.deal_pile)
         drawn_card_power = drawn_card.power
         if drawn_card_power == 0:
@@ -274,13 +286,13 @@ class Game:
         else:
             if not drawn_card_power == 1:
                 target_players_pile = self.get_opponent_choice(
-                    current_player_type, current_players_pile)
+                    current_player_type, current_players_pile, player)
                 self.use_power(drawn_card_power, current_players_pile,
-                               target_players_pile, current_player_type)
+                               target_players_pile, current_player_type, player)
             else:
                 target_players_pile = self.player_list[1].pile
                 self.use_power(drawn_card_power, current_players_pile,
-                               target_players_pile, current_player_type)
+                               target_players_pile, current_player_type, player)
 
     def log_pile_state(self):
 
@@ -302,8 +314,8 @@ class Game:
         return True
 
     def evaluate_and_action_discard_card(self, current_player_type,
-                                         current_players_pile,
-                                         top_discard_card):
+                                         current_players_pile, top_discard_card,
+                                         player: Player):
         if current_player_type == 0:
             response = present_swap_discard_prompt(top_discard_card)
         else:
@@ -316,7 +328,7 @@ class Game:
                         swap_card_destination_index = present_swap_card_prompt(
                         ) - 1
                     elif current_player_type == 1:
-                        swap_card_destination_index = self.get_computer_swap_card_index(
+                        swap_card_destination_index = player.ai.get_computer_swap_card_index(
                         )
                     else:
                         break
@@ -334,13 +346,14 @@ class Game:
         elif response == 0:
             return False
 
-    def swap_drawn_card(self, current_player_type, current_players_pile):
+    def swap_drawn_card(self, current_player_type, current_players_pile,
+                        player):
         while True:
             try:
                 if current_player_type == 0:
                     swap_card_destination_index = present_swap_card_prompt() - 1
                 else:
-                    swap_card_destination_index = self.get_computer_drawn_card_index(
+                    swap_card_destination_index = player.ai.get_computer_drawn_card_index(
                     )
                 swap_discard_card_response = swap(self.deal_pile,
                                                   current_players_pile,
@@ -354,22 +367,39 @@ class Game:
             else:
                 break
 
-    def evaluate_drawn_card(self, Player, current_players_type):
+    def get_opponent_choice(self, current_player_type, current_players_pile,
+                            player):
+        player_list = self.player_list
+        if len(player_list) > 2:
+            if current_player_type == 0:
+                choice_response = int(
+                    present_player_choice(player_list, current_players_pile))
+                return self.player_list[choice_response].pile
+
+            else:
+                return player.ai.get_computer_opponent_choice_for_power(
+                    player_list)
+        else:
+            return player_list[1].pile
+
+    def evaluate_drawn_card(self, player: Player, current_players_type):
         drawn_card = self.deal_pile.get_top_card()
         if current_players_type == 0:
             present_draw_card_preview(drawn_card)
             present_card_powers_string(drawn_card)
             turn_action_choice = present_action_prompt()
         else:
-            turn_action_choice = self.get_computer_action_choice(drawn_card)
+            turn_action_choice = player.ai.get_computer_action_choice(
+                drawn_card)
         return turn_action_choice
 
-    def power_controller(self,
-                         drawn_card_power: int,
-                         source_pile: Pile,
-                         destination_pile: Pile = Pile(),
-                         destination_index: int = 0,
-                         source_index: int = 0) -> tuple[Any, Any]:
+    def power_controller(
+            self,
+            drawn_card_power: int,
+            source_pile: Pile,
+            destination_pile: Pile = Pile(),
+            destination_index: int = 0,
+            source_index: int = 0) -> tuple[str | Card, int | Card] | None:
         """Defines and triggers card power actions."""
         if drawn_card_power == 1:
             card_name = Card.get_card_name(source_pile[destination_index])
@@ -393,13 +423,14 @@ class Game:
             return swap_results
 
     def use_power(self, drawn_card_power: int, current_player_pile: Pile,
-                  target_player_pile: Pile, current_player_type) -> bool:
+                  target_player_pile: Pile, current_player_type,
+                  player) -> bool:
         """Collects necessary input from human to trigger correct card powers"""
         if drawn_card_power == 1:
             if current_player_type == 0:
                 peek_index = present_peek_self_prompt()
             else:
-                peek_index = self.get_computer_self_peek_index()
+                peek_index = player.ai.get_computer_self_peek_index()
             card_name, index_n = self.power_controller(drawn_card_power,
                                                        current_player_pile,
                                                        source_index=peek_index)
@@ -410,7 +441,7 @@ class Game:
             if current_player_type == 0:
                 peek_index = present_peek_card_prompt()
             else:
-                peek_index = self.get_computer_peek_index()
+                peek_index = player.ai.get_computer_peek_index()
             card_name, index_n = self.power_controller(drawn_card_power,
                                                        current_player_pile,
                                                        target_player_pile,
@@ -422,7 +453,7 @@ class Game:
             if current_player_type == 0:
                 source_index, destination_index = present_swap_prompt()
             else:
-                source_index, destination_index = self.get_computer_swap_choice(
+                source_index, destination_index = player.ai.get_computer_swap_choice(
                 )
             self.power_controller(drawn_card_power, current_player_pile,
                                   target_player_pile, destination_index,
@@ -437,7 +468,7 @@ class Game:
             if current_player_type == 0:
                 source_index, destination_index = present_swap_prompt()
             else:
-                source_index, destination_index = self.get_computer_swap_choice(
+                source_index, destination_index = player.ai.get_computer_swap_choice(
                 )
             card_1, card_2 = self.power_controller(drawn_card_power,
                                                    current_player_pile,
@@ -500,6 +531,11 @@ class Game:
             else:
                 return 0
 
+
+@define
+class ComputerCalculation:
+    difficulty: Tuple
+
     def get_computer_swap_card_index(self):
         return 1
 
@@ -522,26 +558,6 @@ class Game:
         source_index = 1
         destination_index = 1
         return source_index, destination_index
-
-    def get_opponent_choice(self, current_player_type, current_players_pile):
-        player_list = self.player_list
-        if len(player_list) > 2:
-            if current_player_type == 0:
-                choice_response = int(
-                    present_player_choice(player_list, current_players_pile))
-                return self.player_list[choice_response].pile
-
-            else:
-                return self.get_computer_opponent_choice_for_power(player_list)
-        else:
-            return player_list[1].pile
-
-    def get_current_hand_value(self, player):
-        current_hand_value = 0
-        current_player = player
-        for card in current_player.memory:
-            current_hand_value += int(card['value'])
-        return current_hand_value
 
 
 def transfer(source_pile: Pile,
@@ -604,7 +620,7 @@ def insert_and_memorize(pile,
         pass
 
 
-def shuffle(pile_name: Pile) -> bool:
+def shuffle(pile_name: Pile) -> Pile:
     """Shuffles cards of a Stack using random function."""
     rng = random.Random()
     rng.shuffle(pile_name)

@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 tabulate = "*"
+attrs = "*"
 
 [dev-packages]
 yapf = "*"

@@ -1,6 +1,6 @@
 from time import sleep
 from tabulate import tabulate
-from model import *
+#from model import *
 
 
 def int_converter_error_handling(func):
