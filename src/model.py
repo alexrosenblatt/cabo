@@ -3,15 +3,16 @@ from __future__ import annotations
 import random
 from collections import deque
 from time import sleep
-from tokenize import String
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
-from xmlrpc.client import Boolean
+
+from typing import Any, TypedDict
 
 from tabulate import tabulate
 
 import constants as c
 from view import *
 import logging
+
+from view import present_other_player_card_discard
 
 logging.basicConfig(filename='log.log',
                     filemode='w',
@@ -24,6 +25,7 @@ class CardMemory(TypedDict):
     stack_name: str
     index: int
     card: Card
+    value: int
 
 
 class Player:
@@ -35,23 +37,28 @@ class Player:
         self.difficulty = difficulty
         self.memory: list[CardMemory] = []
 
-    def insert_in_hand_and_memorize(self, index, object: Card):
+    def insert_in_hand_and_memorize(self, index, object: Card, blind=True):
         self.pile.insert(index, object)
-        self.memory.insert(0, {
-            'stack_name': self.name,
-            'index': index,
-            'card': object,
-        })
+        if not blind:
+            self.memory.insert(
+                0, {
+                    'stack_name': self.name,
+                    'index': index,
+                    'card': object,
+                    'value': object.value
+                })
 
     def _start_game_memorize(self):
         for card in self.pile:
             index = self.pile.index(card)
-            object = card
-            self.memory.insert(0, {
-                'stack_name': self.name,
-                'index': index,
-                'card': object,
-            })
+            object: Card = card
+            self.memory.insert(
+                0, {
+                    'stack_name': self.name,
+                    'index': index,
+                    'card': object,
+                    'value': object.value
+                })
             if self.pile.index(card) >= 1:
                 break
 
@@ -67,7 +74,7 @@ class Pile(deque):
         else:
             self.name = name
 
-    def __str__(self):
+    def __repr__(self):
         hand_list = []
         cards: Card
         for cards in self:
@@ -236,7 +243,7 @@ class Game:
                 if turn_action_choice == 5:  # end game
                     exit()
                 elif turn_action_choice == 4:  # call cabo
-                    if self.set_cabo_state() == True:
+                    if self.set_cabo_state():
                         return present_cabo()
                 elif turn_action_choice == 3:
                     self.swap_drawn_card(current_player_type,
@@ -275,137 +282,13 @@ class Game:
                 self.use_power(drawn_card_power, current_players_pile,
                                target_players_pile, current_player_type)
 
-    def start_human_turn(self, player: Player):
-        """Gather human turn input and triggers game play mechanics."""
-        self.start_round()
-        current_players_pile = player.pile
-        discard_card = self.discard_pile.get_top_card()
-        swap_discard_card_response = present_swap_discard_prompt(discard_card)
-        if swap_discard_card_response == 1:
-            while True:
-                try:
-                    swap_card_destination_index: int = present_swap_card_prompt(
-                    ) - 1
-                    swap_results = swap(self.discard_pile, current_players_pile,
-                                        0, swap_card_destination_index)
-                    present_swap_results(swap_results,
-                                         swap_card_destination_index)
-                except (IndexError, ValueError):
-                    present_card_index_error()
-                else:
-                    break
-            return True
-        elif swap_discard_card_response == 0:
-            while True:
-                sleep(1)  # TODO remove this
-                present_draw_card_preview(self.deal_pile[0])
-                present_card_powers_string(self.deal_pile[0])
-                turn_action_choice = present_action_prompt()
-                try:
-                    if turn_action_choice == 5:  # end game
-                        exit()
-                    elif turn_action_choice == 4:  # call cabo
-                        if self.set_cabo_state() == True:
-                            return present_cabo()
-                    elif turn_action_choice == 3:
-                        while True:
-                            swap_card_destination_index: int = present_swap_card_prompt(
-                            ) - 1
-                            try:
-                                swap_discard_card_response = self.swap_drawn_card(
-                                    swap_card_destination_index, player.pile)
-                                present_swap_draw_results(
-                                    swap_discard_card_response,
-                                    swap_card_destination_index)
-                            except IndexError:
-                                present_card_index_error()
-                            else:
-                                break
-                        return True
-                    elif turn_action_choice == 2:  # discard
-                        self.discard_drawn_card()
-                        sleep(3)
-                        return True
-                    elif turn_action_choice == 1:
-                        drawn_card = get_drawn_card(self.deal_pile)
-                        drawn_card_power = drawn_card.power
-                        if drawn_card_power == 0:
-                            raise ValueError
-                        else:
-                            use_power(drawn_card_power, player.pile,
-                                      self.player_list)
-                            return True
-                    elif turn_action_choice > 6:
-                        raise ValueError  # to make sure number is in range
-                except ValueError:
-                    if turn_action_choice == 2:
-                        present_card_index_error()
-                    if turn_action_choice == 1:
-                        present_card_power_error()
-                    else:
-                        present_card_index_error()
-                else:
-                    break
-            return True
-
-    def start_computer_turn(self):  # TODO make this work lol
-        self.start_round()
-        self.computer_turn_discard_card_check()
-
-        return
-
-    def computer_turn_discard_card_check(self):
-        '''Iterates through set of cards in current memory of computers pile, 
-        and evaluates if the drawn card is of greater value. 
-        If so, it replaces the card with the current discard card.
-        
-        Current strategy is too simplistic. Rewrite card memory to be list of tuples'''
-        discard_card = self.discard_pile.get_top_card()
-        upper_range: float = 1
-        lower_range: float = .5
-
-        def discard_calculation():
-            if discard_card.get_card_value() >= 0:
-                threshold = float(
-                    (card.get('value') - discard_card.get_card_value()) /
-                    card.get('value'))
-                logging.info(
-                    f"1:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
-                )
-            elif card.get('value') <= 0:
-                threshold = 0
-                logging.info(
-                    f"2:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
-                )
-            else:
-                threshold = 1
-                logging.info(
-                    f"Else:discard card value is: {discard_card.get_card_value()} and threshold: {threshold} "
-                )
-            return threshold
-
-        for card in self.computer_pile.memory:
-            if upper_range >= discard_calculation() >= lower_range:
-                logging.info(
-                    f"Discard card: {discard_calculation()} is between {upper_range} and {lower_range} - swapping."
-                )
-                swap_index = self.computer_pile.memory.index(card)
-                logging.info(
-                    f"Index of to be swapped card is {self.computer_pile.memory.index(card)}. This card is a {self.computer_pile[swap_index]}."
-                )
-
-                swap(self.discard_pile, self.computer_pile, 0, swap_index)
-                logging.info(
-                    f"Top card of discard pile is {self.discard_pile[0]}")
-                break
-        self.log_pile_state()
-
     def log_pile_state(self):
+
         logging.info(f"Top of deal pile is {str(self.deal_pile[0])}")
-        logging.info(str(self.computer_pile))
-        logging.info(str(self.computer_pile.memory))
+        for player in self.player_list:
+            logging.info(str(player.pile))
+            logging.info(str(player.memory))
         logging.info(str(self.discard_pile))
-        logging.info(str(self.human_pile))
 
     def end_turn(self) -> bool:
         """Ends turn, increments turn count, and prints terminal indicator."""
@@ -420,11 +303,12 @@ class Game:
 
     def evaluate_and_action_discard_card(self, current_player_type,
                                          current_players_pile,
-                                         drawn_discard_card):
+                                         top_discard_card):
         if current_player_type == 0:
-            response = present_swap_discard_prompt(drawn_discard_card)
+            response = present_swap_discard_prompt(top_discard_card)
         else:
-            response = self.get_computer_discard_evaluation()
+            response = self.get_computer_discard_evaluation(
+                top_discard_card, current_players_pile)
         if response == 1:
             while True:
                 try:
@@ -439,8 +323,11 @@ class Game:
                 except (IndexError, ValueError):
                     present_card_index_error()
                 finally:
-                    swap_results = swap(self.discard_pile, current_players_pile,
-                                        0, swap_card_destination_index)
+                    swap_results = swap(self.discard_pile,
+                                        current_players_pile,
+                                        0,
+                                        swap_card_destination_index,
+                                        is_blind=False)
                     present_swap_results(swap_results,
                                          swap_card_destination_index)
                 return True
@@ -456,8 +343,10 @@ class Game:
                     swap_card_destination_index = self.get_computer_drawn_card_index(
                     )
                 swap_discard_card_response = swap(self.deal_pile,
-                                                  current_players_pile, 0,
-                                                  swap_card_destination_index)
+                                                  current_players_pile,
+                                                  0,
+                                                  swap_card_destination_index,
+                                                  is_blind=False)
                 present_swap_draw_results(swap_discard_card_response,
                                           swap_card_destination_index)
             except IndexError:
@@ -489,12 +378,18 @@ class Game:
             card_name = Card.get_card_name(destination_pile[source_index])
             return (card_name, source_index)
         elif drawn_card_power == 3:
-            swap_results = swap(source_pile, destination_pile, source_index,
-                                destination_index)
+            swap_results = swap(source_pile,
+                                destination_pile,
+                                source_index,
+                                destination_index,
+                                is_blind=True)
             return swap_results
         elif drawn_card_power == 4:
-            swap_results = swap(source_pile, destination_pile, source_index,
-                                destination_index)
+            swap_results = swap(source_pile,
+                                destination_pile,
+                                source_index,
+                                destination_index,
+                                is_blind=False)
             return swap_results
 
     def use_power(self, drawn_card_power: int, current_player_pile: Pile,
@@ -529,11 +424,9 @@ class Game:
             else:
                 source_index, destination_index = self.get_computer_swap_choice(
                 )
-            use_power_results = self.power_controller(drawn_card_power,
-                                                      current_player_pile,
-                                                      target_player_pile,
-                                                      destination_index,
-                                                      source_index)
+            self.power_controller(drawn_card_power, current_player_pile,
+                                  target_player_pile, destination_index,
+                                  source_index)
             if current_player_type == 0:
                 present_blind_swap(source_index, destination_index)
             else:
@@ -551,13 +444,61 @@ class Game:
                                                    target_player_pile,
                                                    destination_index,
                                                    source_index)
-            present_open_swap(source_index, destination_index, card_1, card_2)
+            if current_player_type == 0:
+                present_open_swap(source_index, destination_index, card_1,
+                                  card_2)
             return True
         else:
             return False
 
-    def get_computer_discard_evaluation(self):
-        pass
+    def get_computer_discard_evaluation(self, top_discard_card,
+                                        current_players_pile):
+        '''Iterates through set of cards in current memory of computers pile, 
+        and evaluates if the drawn card is of greater value. 
+        If so, it replaces the card with the current discard card.
+        
+        Current strategy is too simplistic. Rewrite card memory to be list of tuples'''
+        player: Player = current_players_pile.owner
+
+        upper_range: float = 1
+        lower_range: float = .5
+
+        def computer_discard_calculation():
+            discard_card_value = top_discard_card.get_card_value()
+            memorized_card_value = memorized_card.get('card').value
+            if discard_card_value > 0 and memorized_card_value > 0:
+                threshold = float((memorized_card_value - discard_card_value) /
+                                  memorized_card_value)
+                logging.info(
+                    f"1:discard card value is: {discard_card_value} and threshold: {threshold} "
+                )
+            elif memorized_card.get('value') <= 0:
+                threshold = 0
+                logging.info(
+                    f"2:discard card value is: {discard_card_value} and threshold: {threshold} "
+                )
+            else:
+                threshold = 1
+                logging.info(
+                    f"Else:discard card value is: {discard_card_value} and threshold: {threshold} "
+                )
+            return threshold
+
+        player.memory.sort(key=lambda x: x['value'], reverse=True)
+        print(player.memory)
+        for memorized_card in player.memory:
+            if upper_range >= computer_discard_calculation() >= lower_range:
+                # logging.info(
+                #     f"Discard card: {computer_discard_calculation()} is between {upper_range} and {lower_range} - swapping."
+                # )
+                # logging.info(
+                #     f"Index of to be swapped card is {player.memory.index(memorized_card)}. This card is a {player.memory[swap_index].card.name}."
+                # )
+                # logging.info(
+                #     f"Top card of discard pile is {self.discard_pile[0]}")
+                return 1
+            else:
+                return 0
 
     def get_computer_swap_card_index(self):
         return 1
@@ -595,6 +536,13 @@ class Game:
         else:
             return player_list[1].pile
 
+    def get_current_hand_value(self, player):
+        current_hand_value = 0
+        current_player = player
+        for card in current_player.memory:
+            current_hand_value += int(card['value'])
+        return current_hand_value
+
 
 def transfer(source_pile: Pile,
              destination_pile: Pile,
@@ -617,18 +565,22 @@ def transfer(source_pile: Pile,
     return True
 
 
-def swap(source_pile: Pile, destination_pile: Pile, source_index: int,
-         dest_index: int) -> tuple[Card, Card]:
+def swap(source_pile: Pile,
+         destination_pile: Pile,
+         source_index: int,
+         dest_index: int,
+         is_blind=False) -> tuple[Card, Card]:
     """Switches Card from source_stack at source_index with Card in dest_stack at dest_index"""
     swap_card1: Card = source_pile[source_index]
     swap_card2: Card = destination_pile[dest_index]
     del source_pile[source_index]
     del destination_pile[dest_index]
     insert_and_memorize(destination_pile, dest_index, swap_card1,
-                        destination_pile.owner)
+                        destination_pile.owner, is_blind)
     insert_and_memorize(source_pile, source_index, swap_card1,
-                        destination_pile.owner)
-    log_swap_results(source_pile, dest_index, swap_card1, swap_card2)
+                        destination_pile.owner, is_blind)
+    log_swap_results(source_pile, source_index, destination_pile, dest_index,
+                     swap_card1, swap_card2)
     return swap_card1, swap_card2
 
 
@@ -636,14 +588,16 @@ def insert_and_memorize(pile,
                         index,
                         object: Card,
                         player_taking_action,
-                        is_public=0):
+                        is_public=False,
+                        is_blind=False):
     pile.insert(index, object)
-    player_taking_action.memory.insert(0, {
-        'stack_name': pile.name,
-        'index': index,
-        'card': object,
-    })
-    if is_public == 1:
+    if is_blind:
+        player_taking_action.memory.insert(0, {
+            'stack_name': pile.name,
+            'index': index,
+            'card': object,
+        })
+    if not is_public:
         present_other_player_card_discard(pile, index, object,
                                           player_taking_action)
     else:
@@ -662,7 +616,8 @@ def get_drawn_card(pile_name: Pile) -> Card:
     return pile_name[0]
 
 
-def log_swap_results(source_pile, dest_index, swap_card1, swap_card2):
+def log_swap_results(source_pile, source_index, destination_pile,
+                     destination_index, swap_card1, swap_card2):
     logging.info(
-        f"Swapped {swap_card1} in {source_pile} for {swap_card2} in {dest_index}"
+        f"Swapped {swap_card1} in {source_pile}'s hand at index:{source_index} for {swap_card2} at {destination_index} in {destination_pile}"
     )

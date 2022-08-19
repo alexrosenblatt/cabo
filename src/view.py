@@ -3,6 +3,20 @@ from tabulate import tabulate
 from model import *
 
 
+def int_converter_error_handling(func):
+
+    def inner_function(*args, **kwargs):
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except ValueError:
+                print("Please try a different number.")
+            except TypeError:
+                print("Please enter a number.")
+
+    return inner_function
+
+
 def present_cabo() -> bool:
     '''Triggers cabo_called() to trigger final round and prints cabo back to terminal. Sets cabo called game class to True.'''
     print("CABOOOOOOO!")
@@ -17,15 +31,11 @@ def present_round_spacer(turn_count) -> None:
     sleep(1)
 
 
-def present_other_player_card_discard(source_stack, source_index, swap_card1,
-                                      dest_stack):
-    pass
-
-
+@int_converter_error_handling
 def present_game_start_prompt() -> tuple[int, int]:
-    human_player_count = input('How many human players?')
-    computer_player_count = input('How many computer players?')
-    return int(human_player_count), int(computer_player_count)
+    human_player_count = int(input('How many human players?'))
+    computer_player_count = int(input('How many computer players?'))
+    return human_player_count, computer_player_count
 
 
 def present_swap_discard_prompt(discard_card) -> int:
@@ -44,6 +54,12 @@ def present_swap_discard_prompt(discard_card) -> int:
             break
 
 
+def present_other_player_card_discard(pile, index, object,
+                                      player_taking_action):
+    pass
+
+
+@int_converter_error_handling
 def present_swap_card_prompt() -> int:
     n = int(input("Which card would you like to replace?"))
     return n
@@ -62,6 +78,7 @@ def present_card_index_error() -> None:
     sleep(1)
 
 
+@int_converter_error_handling
 def present_action_prompt() -> int:
     a = int(
         input("\n What actions would you like to take?  \
@@ -137,6 +154,7 @@ def present_blind_swap(source_index, dest_index):
     sleep(4)
 
 
+@int_converter_error_handling
 def present_player_choice(player_list, current_players_pile):
     count = 0
     for player in player_list():
@@ -149,6 +167,7 @@ def present_player_choice(player_list, current_players_pile):
     return response - 1
 
 
+@int_converter_error_handling
 def present_swap_prompt():
     source_index = int(
         input(
@@ -161,6 +180,7 @@ def present_swap_prompt():
     return source_index, dest_index
 
 
+@int_converter_error_handling
 def present_peek_self_prompt():
     peek_index = int(
         input(
@@ -169,6 +189,7 @@ def present_peek_self_prompt():
     return peek_index - 1
 
 
+@int_converter_error_handling
 def present_peek_card_prompt():
     peek_index = int(
         input(
@@ -227,5 +248,5 @@ def show_placeholder_hand(stack_obj) -> str:
         hand.append([f"Position: {index}", "x"])
         index += 1
     table = tabulate(hand, tablefmt="fancy_grid", headers="firstrow")
-    tabulated_han = f"\n\n\n{stack_obj.name}: \n\n {table}"
-    return tabulated_han
+    tabulated_hand = f"\n\n\n{stack_obj.name}: \n\n {table}"
+    return tabulated_hand
