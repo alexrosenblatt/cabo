@@ -8,22 +8,6 @@ from view import *
 
 # pull cards from deal stack and crea1te human,computer hands + discard pile
 
-# def check_card_count():  #for testing against losing a card
-#     total_card_count = len(deal_pile) + len(human_pile) + len(
-#         discard_pile) + len(computer_pile)
-#     if total_card_count > 54:
-#         return ValueError("Too many Cards in play.")
-
-# main routine
-# game = Game(
-#     human_pile,
-#     computer_pile,
-#     discard_pile,
-#     1,
-#     True,
-#     False,
-# )
-
 
 def print_currentstate():
     for player in game.player_list:

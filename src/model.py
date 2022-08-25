@@ -39,7 +39,7 @@ class Player:
         self.difficulty = difficulty
         self.memory: list[CardMemory] = []
         if type == 1:
-            self.ai = ComputerCalculation((1, 1))
+            self.ai = ComputerAI((1, 1))
 
     def insert_in_hand_and_memorize(self, index, object: Card, blind=True):
         self.pile.insert(index, object)
@@ -393,35 +393,6 @@ class Game:
                 drawn_card)
         return turn_action_choice
 
-    def power_controller(
-            self,
-            drawn_card_power: int,
-            source_pile: Pile,
-            destination_pile: Pile = Pile(),
-            destination_index: int = 0,
-            source_index: int = 0) -> tuple[str | Card, int | Card] | None:
-        """Defines and triggers card power actions."""
-        if drawn_card_power == 1:
-            card_name = Card.get_card_name(source_pile[destination_index])
-            return (card_name, destination_index)
-        elif drawn_card_power == 2:
-            card_name = Card.get_card_name(destination_pile[source_index])
-            return (card_name, source_index)
-        elif drawn_card_power == 3:
-            swap_results = swap(source_pile,
-                                destination_pile,
-                                source_index,
-                                destination_index,
-                                is_blind=True)
-            return swap_results
-        elif drawn_card_power == 4:
-            swap_results = swap(source_pile,
-                                destination_pile,
-                                source_index,
-                                destination_index,
-                                is_blind=False)
-            return swap_results
-
     def use_power(self, drawn_card_power: int, current_player_pile: Pile,
                   target_player_pile: Pile, current_player_type,
                   player) -> bool:
@@ -431,12 +402,8 @@ class Game:
                 peek_index = present_peek_self_prompt()
             else:
                 peek_index = player.ai.get_computer_self_peek_index()
-            try:
-                self.power_controller(drawn_card_power,
-                                      current_player_pile,
-                                      source_index=peek_index)
-            finally:
-                present_reveal_card(card_name, index)
+            card_name = Card.get_card_name(current_player_pile[peek_index])
+            present_reveal_card(card_name, peek_index)
             return True
 
         elif drawn_card_power == 2:
@@ -444,11 +411,8 @@ class Game:
                 peek_index = present_peek_card_prompt()
             else:
                 peek_index = player.ai.get_computer_peek_index()
-            card_name, index = self.power_controller(drawn_card_power,
-                                                     current_player_pile,
-                                                     target_player_pile,
-                                                     peek_index)
-            present_peek_card(card_name, index)
+            card_name = Card.get_card_name(target_player_pile[peek_index])
+            present_peek_card(card_name, peek_index)
             return True
 
         elif drawn_card_power == 3:
@@ -457,9 +421,11 @@ class Game:
             else:
                 source_index, destination_index = player.ai.get_computer_swap_choice(
                 )
-            self.power_controller(drawn_card_power, current_player_pile,
-                                  target_player_pile, destination_index,
-                                  source_index)
+            swap(current_player_pile,
+                 target_player_pile,
+                 source_index,
+                 destination_index,
+                 is_blind=True)
             if current_player_type == 0:
                 present_blind_swap(source_index, destination_index)
             else:
@@ -472,14 +438,12 @@ class Game:
             else:
                 source_index, destination_index = player.ai.get_computer_swap_choice(
                 )
-            card_1, card_2 = self.power_controller(drawn_card_power,
-                                                   current_player_pile,
-                                                   target_player_pile,
-                                                   destination_index,
-                                                   source_index)
-            if current_player_type == 0:
-                present_open_swap(source_index, destination_index, card_1,
-                                  card_2)
+            card_1, card_2 = swap(current_player_pile,
+                                  target_player_pile,
+                                  source_index,
+                                  destination_index,
+                                  is_blind=False)
+            present_open_swap(source_index, destination_index, card_1, card_2)
             return True
         else:
             return False
@@ -535,7 +499,7 @@ class Game:
 
 
 @define
-class ComputerCalculation:
+class ComputerAI:
     difficulty: Tuple
 
     def get_computer_swap_card_index(self):
