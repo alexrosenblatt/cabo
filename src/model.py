@@ -431,10 +431,12 @@ class Game:
                 peek_index = present_peek_self_prompt()
             else:
                 peek_index = player.ai.get_computer_self_peek_index()
-            card_name, index_n = self.power_controller(drawn_card_power,
-                                                       current_player_pile,
-                                                       source_index=peek_index)
-            present_reveal_card(card_name, index_n)
+            try:
+                self.power_controller(drawn_card_power,
+                                      current_player_pile,
+                                      source_index=peek_index)
+            finally:
+                present_reveal_card(card_name, index)
             return True
 
         elif drawn_card_power == 2:
@@ -442,11 +444,11 @@ class Game:
                 peek_index = present_peek_card_prompt()
             else:
                 peek_index = player.ai.get_computer_peek_index()
-            card_name, index_n = self.power_controller(drawn_card_power,
-                                                       current_player_pile,
-                                                       target_player_pile,
-                                                       peek_index)
-            present_peek_card(card_name, index_n)
+            card_name, index = self.power_controller(drawn_card_power,
+                                                     current_player_pile,
+                                                     target_player_pile,
+                                                     peek_index)
+            present_peek_card(card_name, index)
             return True
 
         elif drawn_card_power == 3:

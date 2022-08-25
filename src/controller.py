@@ -37,7 +37,7 @@ game = Game()
 game.initialize_game()
 
 print_currentstate()
-2
+
 while not game.cabo_called:
     for player in game.player_list:
         if player.type == 0:
