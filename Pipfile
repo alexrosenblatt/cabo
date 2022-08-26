@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 tabulate = "*"
 attrs = "*"
+asyncio = "*"
+aioconsole = "*"
 
 [dev-packages]
 yapf = "*"

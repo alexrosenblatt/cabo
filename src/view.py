@@ -1,10 +1,11 @@
 from time import sleep
 from tabulate import tabulate
-#from model import *
+
+# from model import *
+from aioconsole import ainput
 
 
 def int_converter_error_handling(func):
-
     def inner_function(*args, **kwargs):
         while True:
             try:
@@ -18,7 +19,7 @@ def int_converter_error_handling(func):
 
 
 def present_cabo() -> bool:
-    '''Triggers cabo_called() to trigger final round and prints cabo back to terminal. Sets cabo called game class to True.'''
+    """Triggers cabo_called() to trigger final round and prints cabo back to terminal. Sets cabo called game class to True."""
     print("CABOOOOOOO!")
     sleep(3)
     return True
@@ -33,8 +34,8 @@ def present_round_spacer(turn_count) -> None:
 
 @int_converter_error_handling
 def present_game_start_prompt() -> tuple[int, int]:
-    human_player_count = int(input('How many human players?'))
-    computer_player_count = int(input('How many computer players?'))
+    human_player_count = int(input("How many human players?"))
+    computer_player_count = int(input("How many computer players?"))
     return human_player_count, computer_player_count
 
 
@@ -42,10 +43,12 @@ def present_swap_discard_prompt(discard_card) -> int:
     while True:
         try:
             r = int(
-                input(f"\n The discard pile contains a {discard_card.name}. \
+                input(
+                    f"\n The discard pile contains a {discard_card.name}. \
                         \n \n Would you like to swap this with a card in your own hand? \
                         \n \n  If so, press 1. Otherwise, 0 to draw a card. \n "
-                     ))
+                )
+            )
             return r
         except ValueError:
             print(f"\n Please enter a valid number. Let's try again. \n")
@@ -54,8 +57,7 @@ def present_swap_discard_prompt(discard_card) -> int:
             break
 
 
-def present_other_player_card_discard(pile, index, object,
-                                      player_taking_action):
+def present_other_player_card_discard(pile, index, object, player_taking_action):
     pass
 
 
@@ -73,22 +75,23 @@ def present_swap_results(sr, hand_index) -> None:
 
 
 def present_card_index_error() -> None:
-    print(
-        f"\n Sorry - that card or position doesn't exist. Let's try again. \n")
+    print(f"\n Sorry - that card or position doesn't exist. Let's try again. \n")
     sleep(1)
 
 
 @int_converter_error_handling
 def present_action_prompt() -> int:
     a = int(
-        input("\n What actions would you like to take?  \
+        input(
+            "\n What actions would you like to take?  \
                                             \n \t 1. Use power on drawn card  \
                                             \n \t 2. Discard drawn card \
                                             \n \t 3. Swap drawn card with one in hand \
                                             \n \t 4. Call Cabo! \
                                             \n \t 5. End game  \
                                             \n \n \t Please respond with 1,2,3,4 \n \n"
-             ))
+        )
+    )
     return a
 
 
@@ -108,7 +111,7 @@ def present_end_round(turn_count) -> None:
     print(
         f"\n \n \n --------------------------------------------------------\n \t \tThat concludes turn {turn_count}\n---------------------------------------------------------\n"
     )
-    cls = lambda: print('\n' * 100)
+    cls = lambda: print("\n" * 100)
     cls()
     sleep(2)
 
@@ -116,19 +119,20 @@ def present_end_round(turn_count) -> None:
 def present_intro():
     print("Welcome to Cabo!")
     name: str = input(f"Please tell me your name! \n")
-    #played_before: str = input(f"Have you played before? Enter Yes or No \n")
-    #played_before = played_before.lower()
-    #if played_before == 'yes':
+    # played_before: str = input(f"Have you played before? Enter Yes or No \n")
+    # played_before = played_before.lower()
+    # if played_before == 'yes':
     #   pass
-    #if played_before == 'no':
+    # if played_before == 'no':
     #    print(f"/n Placeholder for Instructions \n")
     return name
 
 
 def present_card_powers_string(card) -> None:
-    '''Prints a string to terminal of the power associated with the Card'''
-    print(f"This top card has the ability to:{card.get_card_powers()}"
-         )  # TODO fix this to show strings)
+    """Prints a string to terminal of the power associated with the Card"""
+    print(
+        f"This top card has the ability to:{card.get_card_powers()}"
+    )  # TODO fix this to show strings)
 
 
 def present_reveal_card(card_name, index_n):
@@ -172,11 +176,13 @@ def present_swap_prompt():
     source_index = int(
         input(
             "Which of your cards would you like to swap? Please enter position number."
-        ))
+        )
+    )
     dest_index = int(
         input(
             "Which of your opponents cards would you like to swap with? Please enter position number."
-        ))
+        )
+    )
     return source_index, dest_index
 
 
@@ -185,7 +191,8 @@ def present_peek_self_prompt():
     peek_index = int(
         input(
             "Which of your own cards would you like to look at? Respond with position number: \n"
-        ))
+        )
+    )
     return peek_index - 1
 
 
@@ -194,7 +201,8 @@ def present_peek_card_prompt():
     peek_index = int(
         input(
             "Which of your opponents cards would you like to look at? Respond with position number: \n"
-        ))
+        )
+    )
     return peek_index
 
 
@@ -204,14 +212,14 @@ def present_peek_card(card_name, index_n):
 
 
 def present_draw_card_preview(card_obj) -> None:
-    '''Prints to the terminal the name of the Stacks current card in index.'''
+    """Prints to the terminal the name of the Stacks current card in index."""
     print(f"\n You've drawn a {card_obj.name}.")
 
 
 def present_hand_table(stack_obj, open_hand: bool = False) -> None:
-    '''Returns a string containing a table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate().
-            If open hand == False, it reveals the first two cards to the player. If open_hand == True, it shows all cards.
-            '''
+    """Returns a string containing a table of the masked set of cards in a hand -- using the tabulate table module as defined in tabulate().
+    If open hand == False, it reveals the first two cards to the player. If open_hand == True, it shows all cards.
+    """
     hand: list[list[str]] = [["Position", "Card"]]
     cards: Card
     index = 1
@@ -221,7 +229,7 @@ def present_hand_table(stack_obj, open_hand: bool = False) -> None:
                 hand.append([f"Position: {index}", cards.name])
                 index += 1
             else:
-                hand.append([f"Position: {index}", 'x'])
+                hand.append([f"Position: {index}", "x"])
                 index += 1
     else:
         for cards in stack_obj:
@@ -232,8 +240,8 @@ def present_hand_table(stack_obj, open_hand: bool = False) -> None:
 
 
 def tabulate_hand(stack_obj, hand: list[list[str]]) -> str:  # TODO
-    '''Uses tabulate module to produce terminal formatted tables.'''
-    table = tabulate(hand, tablefmt="fancy_grid", headers='firstrow')
+    """Uses tabulate module to produce terminal formatted tables."""
+    table = tabulate(hand, tablefmt="fancy_grid", headers="firstrow")
     response = f"\n\n\n{stack_obj.name}: \n\n {table}"
     return response
 
@@ -250,3 +258,8 @@ def show_placeholder_hand(stack_obj) -> str:
     table = tabulate(hand, tablefmt="fancy_grid", headers="firstrow")
     tabulated_hand = f"\n\n\n{stack_obj.name}: \n\n {table}"
     return tabulated_hand
+
+
+async def get_human_slap_input():
+    response = await ainput("Do you want to slap?")
+    return response
