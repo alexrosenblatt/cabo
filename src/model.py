@@ -320,12 +320,12 @@ class Game:
         logging.info(str(self.discard_pile))
 
     def end_turn(self) -> bool:
-        """Ends turn, increments turn count, and prints terminal indicator."""
+        """Ends turn, increments turn count."""
         present_end_round(self.turn_count)
-        self.turn_count_increment()
+        self.increment_turn_count()
         return True
 
-    def turn_count_increment(self) -> bool:
+    def increment_turn_count(self) -> bool:
         """increments turn count indicator"""
         self.turn_count += 1
         return True
@@ -344,33 +344,36 @@ class Game:
                 top_discard_card, current_players_pile
             )
         if response == 1:
-            while True:
-                try:
-                    if current_player_type == 0:
-                        swap_card_destination_index = present_swap_card_prompt() - 1
-                    elif current_player_type == 1:
-                        swap_card_destination_index = (
-                            player.ai.get_computer_swap_card_index()
-                        )
-                    else:
-                        break
-                except (IndexError, ValueError):
-                    present_card_index_error()
-                finally:
-                    swap_results = swap(
-                        self.discard_pile,
-                        current_players_pile,
-                        0,
-                        swap_card_destination_index,
-                        is_blind=False,
-                    )
-                    present_swap_results(swap_results, swap_card_destination_index)
-                    await self.slap_evaluation_loop(
-                        self.discard_pile[0]
-                    )  # todo - wire this up
-                return True
+                await self.swap_discard_card(current_player_type, current_players_pile, player)  # todo - wire this up
         elif response == 0:
             return False
+
+    async def swap_discard_card(self, current_player_type, current_players_pile, player):
+        while True:    
+            try:
+                if current_player_type == 0:
+                    swap_card_destination_index = present_swap_card_prompt() - 1
+                else:
+                    swap_card_destination_index = (
+                                player.ai.get_computer_swap_card_index()
+                            )
+            except (IndexError, ValueError):
+                present_card_index_error()
+            finally:
+                present_swap_results(
+                            swap(
+                                self.discard_pile,
+                                current_players_pile,
+                                0,
+                                swap_card_destination_index,
+                                is_blind=False,
+                            ),
+                            swap_card_destination_index,
+                        )
+                await self.slap_evaluation_loop(
+                            self.discard_pile[0]
+                        )
+                return True
 
     async def swap_drawn_card(self, current_player_type, current_players_pile, player):
         while True:
@@ -381,23 +384,22 @@ class Game:
                     swap_card_destination_index = (
                         player.ai.get_computer_drawn_card_index()
                     )
-                swap_discard_card_response = swap(
-                    self.deal_pile,
-                    current_players_pile,
-                    0,
+            except IndexError,ValueError:
+                present_card_index_error()
+            finally:
+                present_swap_drawn_card_results(
+                    swap(
+                        self.deal_pile,
+                        current_players_pile,
+                        0,
+                        swap_card_destination_index,
+                        is_blind=False,
+                    ),
                     swap_card_destination_index,
-                    is_blind=False,
-                )
-                present_swap_draw_results(
-                    swap_discard_card_response, swap_card_destination_index
                 )
                 await self.slap_evaluation_loop(
                     self.deal_pile[0]
                 )  # todo - wire this up
-            except IndexError:
-                present_card_index_error()
-            else:
-                break
 
     def get_opponent_choice(self, current_player_type, current_players_pile, player):
         player_list = self.player_list

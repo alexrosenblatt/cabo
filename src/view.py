@@ -67,9 +67,16 @@ def present_swap_card_prompt() -> int:
     return n
 
 
-def present_swap_results(sr, hand_index) -> None:
+def present_swap_results(swapped_card_set, hand_index) -> None:
     print(
-        f"You swapped {sr[1]} with discarded card {sr[0]} at position {hand_index} in your hand."
+        f"You swapped {swapped_card_set[1]} with discarded card {swapped_card_set[0]} at position {hand_index} in your hand."
+    )
+    sleep(2)
+
+
+def present_swap_drawn_card_results(swapped_card_set, hand_index):
+    print(
+        f"{swapped_card_set[0].name} is now in position {hand_index} in your hand. {swapped_card_set[1].name} has been sent to the discard pile."
     )
     sleep(2)
 
@@ -93,13 +100,6 @@ def present_action_prompt() -> int:
         )
     )
     return a
-
-
-def present_swap_draw_results(r, hand_index):
-    print(
-        f"{r[0].name} is now in position {hand_index} in your hand. {r[1].name} has been sent to the discard pile."
-    )
-    sleep(2)
 
 
 def present_card_power_error() -> None:
