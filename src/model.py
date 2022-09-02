@@ -332,7 +332,7 @@ class Game:
         self.turn_count += 1
         return True
 
-    def evaluate_and_action_discard_card(
+    async def evaluate_and_action_discard_card(
         self,
         current_player_type,
         current_players_pile,
@@ -367,11 +367,14 @@ class Game:
                         is_blind=False,
                     )
                     present_swap_results(swap_results, swap_card_destination_index)
+                    await self.slap_evaluation_loop(
+                        self.discard_pile[0]
+                    )  # todo - wire this up
                 return True
         elif response == 0:
             return False
 
-    def swap_drawn_card(self, current_player_type, current_players_pile, player):
+    async def swap_drawn_card(self, current_player_type, current_players_pile, player):
         while True:
             try:
                 if current_player_type == 0:
@@ -390,6 +393,9 @@ class Game:
                 present_swap_draw_results(
                     swap_discard_card_response, swap_card_destination_index
                 )
+                await self.slap_evaluation_loop(
+                    self.deal_pile[0]
+                )  # todo - wire this up
             except IndexError:
                 present_card_index_error()
             else:
@@ -536,9 +542,9 @@ class Game:
         else:
             return False
 
-    async def slap_evaluation_loop(self, discarded_card, player_set):
+    async def slap_evaluation_loop(self, discarded_card):
         aws = []
-        for player in player_set:
+        for player in self.player_list:
             if player.type == 0:
                 aws += asyncio.create_task(self.ai_slap_evaluate(discarded_card))
             elif player.type == 1:
