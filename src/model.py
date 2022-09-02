@@ -232,7 +232,6 @@ class Game:
         if self.is_open_hand == True:
             for player in self.player_list:
                 present_hand_table(player.pile, True)
-            sleep(2)  # TODO remove
             return True
         elif self.turn_count == 1 and self.is_open_hand == False:
             for player in self.player_list:
@@ -240,7 +239,6 @@ class Game:
                     show_placeholder_hand(player.pile)
                 else:
                     present_hand_table(player.pile)
-            sleep(2)  # TODO remove
             return True
         else:
             for player in self.player_list:
