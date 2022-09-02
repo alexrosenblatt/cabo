@@ -518,14 +518,6 @@ class Game:
         print(player.memory)
         for memorized_card in player.memory:
             if upper_range >= computer_discard_calculation() >= lower_range:
-                # logging.info(
-                #     f"Discard card: {computer_discard_calculation()} is between {upper_range} and {lower_range} - swapping."
-                # )
-                # logging.info(
-                #     f"Index of to be swapped card is {player.memory.index(memorized_card)}. This card is a {player.memory[swap_index].card.name}."
-                # )
-                # logging.info(
-                #     f"Top card of discard pile is {self.discard_pile[0]}")
                 return 1
             else:
                 return 0

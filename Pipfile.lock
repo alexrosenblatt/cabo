@@ -18,10 +18,11 @@
     "default": {
         "aioconsole": {
             "hashes": [
-                "sha256:9b719b270e7cf6f2454eeaf16c20a025b73f0d4d352d157baa77ce9ad1df427d"
+                "sha256:a0288be63d47ec5fd153f284477a1c9327c8f8e6b193d7cf0b2a8d1576a31589",
+                "sha256:c8ddd9fd21db71ea51fb9b0d20d21d11c409c92988edf07c935d705fa60e026b"
             ],
             "index": "pypi",
-            "version": "==0.5.0"
+            "version": "==0.5.1"
         },
         "asyncio": {
             "hashes": [
